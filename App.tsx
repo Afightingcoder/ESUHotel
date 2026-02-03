@@ -1,65 +1,58 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
+ * 易宿酒店预订平台 - 用户端移动端入口
+ * 核心流程：酒店查询页（首页）→ 酒店列表页 → 酒店详情页
  */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
   useColorScheme,
-  View,
+  StatusBar
 } from 'react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// 导入页面组件
+import HotelSearchPage from './src/pages/HotelSearch';
+import HotelListPage from './src/pages/HotelList';
+import HotelDetailPage from './src/pages/HotelDetail';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+// 导入类型定义
+import type { RouteType } from './src/types';
 
-function Section({children, title}: SectionProps): React.JSX.Element {
+// 主应用组件（路由控制核心）
+const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  const [currentRoute, setCurrentRoute] = useState<RouteType>('search');
+  const [routeParams, setRouteParams] = useState<any>({});
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // 路由跳转方法
+  const navigateTo = (route: RouteType, params?: any) => {
+    setRouteParams(params || {});
+    setCurrentRoute(route);
+  };
+
+  // 返回上一页
+  const navigateBack = () => {
+    if (currentRoute === 'list') navigateTo('search');
+    if (currentRoute === 'detail') navigateTo('list', routeParams);
+  };
+
+  // 根据当前路由渲染对应页面
+  const renderCurrentPage = () => {
+    switch (currentRoute) {
+      case 'search':
+        return <HotelSearchPage navigateTo={navigateTo} />;
+      case 'list':
+        return <HotelListPage navigateTo={navigateTo} navigateBack={navigateBack} routeParams={routeParams} />;
+      case 'detail':
+        return <HotelDetailPage navigateBack={navigateBack} routeParams={routeParams} />;
+      default:
+        return <HotelSearchPage navigateTo={navigateTo} />;
+    }
+  };
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    flex: 1
   };
 
   return (
@@ -68,51 +61,9 @@ function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+      {renderCurrentPage()}
     </SafeAreaView>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
