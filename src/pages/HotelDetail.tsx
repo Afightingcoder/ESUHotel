@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,16 @@ const HotelDetailPage = ({
 }) => {
   // 获取当前酒店数据
   const currentHotel = mockHotels.find(hotel => hotel.id === routeParams.hotelId) || mockHotels[0];
+  
+  // 日期状态管理
+  const [startDate, setStartDate] = useState<string>('2026-03-10');
+  const [endDate, setEndDate] = useState<string>('2026-03-11');
+  
+  // 处理日期选择
+  const handleDateSelect = (start: string, end: string) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
 
   return (
     <ScrollView style={styles.pageContainer}>
@@ -63,7 +73,11 @@ const HotelDetailPage = ({
 
       {/* 日历+人间夜Banner */}
       <View style={styles.calendarBanner}>
-        <Calendar />
+        <Calendar
+          onDateSelect={handleDateSelect}
+          initialStartDate={startDate}
+          initialEndDate={endDate}
+        />
         <View style={styles.roomNightContainer}>
           <Text style={styles.roomNightLabel}>入住间夜：</Text>
           <TouchableOpacity style={styles.roomNightBtn}>

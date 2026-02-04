@@ -14,6 +14,21 @@ import Calendar from '../components/Calendar';
 const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params?: any) => void }) => {
   const [location, setLocation] = useState<string>('上海');
   const [keyword, setKeyword] = useState<string>('');
+  
+  // 计算今天和明天的日期
+  const getTodayDate = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+  
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+  };
+  
+  const [startDate, setStartDate] = useState<string>(getTodayDate());
+  const [endDate, setEndDate] = useState<string>(getTomorrowDate());
   const [filters, setFilters] = useState<{ star: number[]; priceRange: number[] }>({
     star: [],
     priceRange: []
@@ -41,13 +56,19 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
     });
   };
 
+  // 处理日期选择
+  const handleDateSelect = (start: string, end: string) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
   // 提交查询
   const handleSearch = () => {
     navigateTo('list', {
       location,
       keyword,
       filters,
-      checkDate: '2026-03-10 至 2026-03-11'
+      checkDate: `${startDate} 至 ${endDate}`
     });
   };
 
@@ -102,7 +123,11 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
         {/* 日期选择 */}
         <View style={styles.searchItem}>
           <Text style={styles.searchLabel}>入住日期</Text>
-          <Calendar />
+          <Calendar
+            onDateSelect={handleDateSelect}
+            initialStartDate={startDate}
+            initialEndDate={endDate}
+          />
         </View>
 
         {/* 筛选条件（星级+价格） */}
