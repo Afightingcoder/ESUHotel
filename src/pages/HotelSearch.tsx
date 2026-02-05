@@ -14,7 +14,8 @@ import {
 import type { RouteType } from '../types';
 import Calendar from '../components/Calendar';
 import qs from 'qs';
-import Geolocation from 'react-native-geolocation-service';
+// 导入react-native-amap-geolocation库
+import { init, Geolocation as AMapGeolocation } from 'react-native-amap-geolocation';
 
 const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params?: any) => void }) => {
   const [location, setLocation] = useState<string>('上海');
@@ -49,6 +50,21 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
     { id: 'tag_06', name: '江景房' }
   ];
 
+  // 初始化react-native-amap-geolocation库
+  useEffect(() => {
+    // 初始化高德地图定位
+    if (Platform.OS === 'android') {
+      // Android端需要在代码中设置API key
+      init({
+        ios: '',
+        android: '81583f4cae74715f049663264b247f14'
+      });
+    }
+    // 组件卸载时清理
+    return () => {
+    };
+  }, []);
+
   // 请求定位权限
   const requestLocationPermission = async () => {
     try {
@@ -62,7 +78,7 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } else {
-        // iOS 权限请求会在 getCurrentPosition 时自动触发
+        // iOS 权限请求会在定位时自动触发
         return true;
       }
     } catch (err) {
@@ -144,12 +160,11 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
                   return;
                 }
                 
-                // 获取当前位置
-                Geolocation.getCurrentPosition(
+                // 获取当前位置 - 使用react-native-amap-geolocation
+                AMapGeolocation.getCurrentPosition(
                   (position) => {
                     console.log('位置', position);
                     const { latitude, longitude } = position.coords;
-                    
                     // 高德地图逆地理编码API参数
                     const aMapParams = {
                       key: '06bce1963ddc5fbd277faea82fd638fb', // API密钥
@@ -164,7 +179,7 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
                     // 构建请求URL
                     const aMapBaseURL = 'https://restapi.amap.com/v3/geocode/regeo';
                     const aMapLocationURL = `${aMapBaseURL}?${qs.stringify(aMapParams)}`;
-                        // 发送请求获取地址信息
+                    // 发送请求获取地址信息
                         fetch(aMapLocationURL)
                           .then(response => response.json())
                           .then(data => {
@@ -184,22 +199,17 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
                           }
                         } else {
                           // 如果逆地理编码失败，使用经纬度信息
-                          setLocation(latitude.toFixed(4), longitude.toFixed(4));
+                          setLocation(`${longitude.toFixed(4)},${latitude.toFixed(4)}`);
                         }
                       })
                       .catch(error => {
                         // 如果逆地理编码失败，使用经纬度信息
-                        setLocation(latitude.toFixed(4), longitude.toFixed(4));
+                        setLocation(`${longitude.toFixed(4)},${latitude.toFixed(4)}`);
                       });
                   },
                   (error) => {
                     Alert.alert('定位失败', error.message);
-                    console.log('fail', error);
-                  },
-                  {
-                    enableHighAccuracy: true,
-                    timeout: 20000,
-                    maximumAge: 1000
+                    console.log('定位失败:', error);
                   }
                 );
               }}
