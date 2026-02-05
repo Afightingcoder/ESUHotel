@@ -11,9 +11,9 @@ import {
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 // 导入页面组件
-import HotelSearchPage from './src/pages/HotelSearch';
-import HotelListPage from './src/pages/HotelList';
-import HotelDetailPage from './src/pages/HotelDetail';
+import HotelSearch from './src/pages/HotelSearch';
+import HotelList from './src/pages/HotelList';
+import HotelDetail from './src/pages/HotelDetail';
 
 // 导入类型定义
 import type { RouteType } from './src/types';
@@ -40,13 +40,13 @@ const App = () => {
   const renderCurrentPage = () => {
     switch (currentRoute) {
       case 'search':
-        return <HotelSearchPage navigateTo={navigateTo} />;
+        return <HotelSearch navigateTo={navigateTo} />;
       case 'list':
-        return <HotelListPage navigateTo={navigateTo} navigateBack={navigateBack} routeParams={routeParams} />;
+        return <HotelList navigateTo={navigateTo} routeParams={routeParams} />;
       case 'detail':
-        return <HotelDetailPage navigateBack={navigateBack} routeParams={routeParams} />;
+        return <HotelDetail navigateBack={navigateBack} routeParams={routeParams} />;
       default:
-        return <HotelSearchPage navigateTo={navigateTo} />;
+        return <HotelSearch navigateTo={navigateTo} />;
     }
   };
 

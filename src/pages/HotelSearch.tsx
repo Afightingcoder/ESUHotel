@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
-  StyleSheet
+  StyleSheet,
+  Alert,
+  Platform,
+  PermissionsAndroid
 } from 'react-native';
 import type { RouteType } from '../types';
 import Calendar from '../components/Calendar';
+import qs from 'qs';
+import Geolocation from 'react-native-geolocation-service';
 
 const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params?: any) => void }) => {
   const [location, setLocation] = useState<string>('上海');
@@ -43,6 +48,28 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
     { id: 'tag_05', name: '含早餐' },
     { id: 'tag_06', name: '江景房' }
   ];
+
+  // 请求定位权限
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: '位置权限',
+            message: '需要获取您的位置信息以提供更好的服务',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } else {
+        // iOS 权限请求会在 getCurrentPosition 时自动触发
+        return true;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
 
   // 筛选条件处理
   const handleFilterChange = (type: 'star' | 'price', value: number) => {
@@ -95,15 +122,91 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
         {/* 当前地点 */}
         <View style={styles.searchItem}>
           <Text style={styles.searchLabel}>当前地点</Text>
-          <TextInput
-            style={styles.searchInput}
-            value={location}
-            onChangeText={setLocation}
-            placeholder="输入城市"
-            autoCapitalize="none"
-            keyboardType="default"
-            autoCorrect={false}
-          />
+          <View style={styles.locationContainer}>
+            <TextInput
+              style={styles.searchInput}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="输入城市"
+              autoCapitalize="none"
+              keyboardType="default"
+              autoCorrect={false}
+            />
+            <TouchableOpacity 
+              style={styles.locationButton} 
+              onPress={async () => {
+                Alert.alert('正在获取当前位置...');
+                
+                // 请求定位权限
+                const hasPermission = await requestLocationPermission();
+                if (!hasPermission) {
+                  Alert.alert('定位权限被拒绝', '请在设置中开启定位权限');
+                  return;
+                }
+                
+                // 获取当前位置
+                Geolocation.getCurrentPosition(
+                  (position) => {
+                    console.log('位置', position);
+                    const { latitude, longitude } = position.coords;
+                    
+                    // 高德地图逆地理编码API参数
+                    const aMapParams = {
+                      key: '06bce1963ddc5fbd277faea82fd638fb', // API密钥
+                      poitype: 'all', // 兴趣点类型
+                      radius: 3000, // 搜索半径
+                      output: 'json', // 输出格式
+                      extensions: 'all', // 返回结果是否包含详细信息
+                      roadlevel: 0, // 道路等级
+                      location: `${longitude},${latitude}` // 经纬度
+                    };
+                    
+                    // 构建请求URL
+                    const aMapBaseURL = 'https://restapi.amap.com/v3/geocode/regeo';
+                    const aMapLocationURL = `${aMapBaseURL}?${qs.stringify(aMapParams)}`;
+                        // 发送请求获取地址信息
+                        fetch(aMapLocationURL)
+                          .then(response => response.json())
+                          .then(data => {
+                        // 处理响应数据
+                        if (data.status === '1') {
+                          // 提取地址组成部分
+                          const addressComponent = data.regeocode.addressComponent;
+                          if (addressComponent) {
+                            // 构建街道级别的地址
+                            let addressParts = [];
+                            if (addressComponent.city) addressParts.push(addressComponent.city);
+                            if (addressComponent.district) addressParts.push(addressComponent.district);
+                            if (addressComponent.township) addressParts.push(addressComponent.township);
+                            
+                            const streetLevelAddress = addressParts.join('');
+                            setLocation(streetLevelAddress);
+                          }
+                        } else {
+                          // 如果逆地理编码失败，使用经纬度信息
+                          setLocation(latitude.toFixed(4), longitude.toFixed(4));
+                        }
+                      })
+                      .catch(error => {
+                        // 如果逆地理编码失败，使用经纬度信息
+                        setLocation(latitude.toFixed(4), longitude.toFixed(4));
+                      });
+                  },
+                  (error) => {
+                    Alert.alert('定位失败', error.message);
+                    console.log('fail', error);
+                  },
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 1000
+                  }
+                );
+              }}
+            >
+              <Text style={styles.locationIcon}>📍</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* 关键字搜索 */}
@@ -260,6 +363,44 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 14
+  },
+  // 当前地点容器样式
+  locationContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44
+  },
+  locationInput: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff'
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#333'
+  },
+  locationArrow: {
+    fontSize: 14,
+    color: '#999'
+  },
+  locationButton: {
+    marginLeft: 12,
+    padding: 8,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  locationIcon: {
+    fontSize: 16
   },
   // 筛选条件样式
   filterContainer: {
