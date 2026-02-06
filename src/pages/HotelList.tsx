@@ -12,11 +12,11 @@ import { mockHotels } from '../data/mockData';
 
 const HotelListPage = ({
   navigateTo,
-  navigateBack,
+  // navigateBack,
   routeParams
 }: {
   navigateTo: (route: RouteType, params?: any) => void;
-  navigateBack: () => void;
+  // navigateBack: () => void;
   routeParams: any;
 }) => {
   const [hotels, setHotels] = useState<HotelType[]>(mockHotels);
@@ -64,7 +64,7 @@ const HotelListPage = ({
     <View style={styles.pageContainer}>
       {/* 顶部核心筛选头 */}
       <View style={styles.listFilterHeader}>
-        <TouchableOpacity style={styles.backBtn} onPress={navigateBack}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigateTo('hotelSearch')}>
           <Text style={styles.backBtnText}>← 返回</Text>
         </TouchableOpacity>
         <Text style={styles.filterHeaderText}>{routeParams.location}</Text>
