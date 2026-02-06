@@ -9,7 +9,8 @@ import {
   StyleSheet,
   Alert,
   Platform,
-  PermissionsAndroid
+  PermissionsAndroid,
+  Modal
 } from 'react-native';
 import type { RouteType } from '../types';
 import Calendar from '../components/Calendar';
@@ -42,6 +43,18 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
   });
   // 加载弹窗状态
   const [loading, setLoading] = useState<boolean>(false);
+  // 客房和人数状态
+  const [rooms, setRooms] = useState<number>(1);
+  const [adults, setAdults] = useState<number>(1);
+  const [children, setChildren] = useState<number>(0);
+  // 选择弹窗状态
+  const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
+  // 数字选择弹窗状态
+  const [isNumberModalVisible, setIsNumberModalVisible] = useState<boolean>(false);
+  const [currentSelectType, setCurrentSelectType] = useState<'rooms' | 'adults' | 'children' | null>(null);
+  // 输入数字状态
+  const [inputNumber, setInputNumber] = useState<string>('');
+  const [isInputModalVisible, setIsInputModalVisible] = useState<boolean>(false);
 
   // 快捷标签数据
   const quickTags = [
@@ -263,6 +276,14 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
               keyboardType="default"
               autoCorrect={false}
             />
+            {keyword ? (
+              <TouchableOpacity 
+                style={styles.clearButton} 
+                onPress={() => setKeyword('')}
+              >
+                <Text style={styles.clearButtonText}>✕</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
         {/* 横线分隔符 */}
@@ -276,6 +297,22 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
             initialEndDate={endDate}
           />
         </View>
+        {/* 横线分隔符 */}
+          <View style={styles.horizontalDivider} />
+
+        {/* 客房和人数统计 */}
+        <TouchableOpacity 
+          style={styles.searchItem}
+          onPress={() => setIsGuestModalVisible(true)}
+        >
+          <Text style={styles.searchLabel}>👥</Text>
+          <View style={styles.guestInfoContainer}>
+            <Text style={styles.guestInfoText}>
+              {rooms}间房 · {adults}成人 · {children}儿童
+            </Text>
+            <Text style={styles.dropdownIcon}>▼</Text>
+          </View>
+        </TouchableOpacity>
         {/* 横线分隔符 */}
           <View style={styles.horizontalDivider} />
 
@@ -345,6 +382,268 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
         visible={loading} 
         message="紧急定位ing~"
       />
+      
+      {/* 选择客房和入住人数弹窗 */}
+      <Modal
+        visible={isGuestModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsGuestModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsGuestModalVisible(false)}
+        >
+          <View style={styles.guestModalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>选择客房和入住人数</Text>
+                <TouchableOpacity onPress={() => setIsGuestModalVisible(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.modalContent}>
+                {/* 房间数量 */}
+                <View style={styles.guestRow}>
+                  <Text style={styles.guestRowLabel}>房间数量</Text>
+                  <View style={styles.numberControl}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.numberButton, 
+                        rooms <= 1 && styles.numberButtonDisabled
+                      ]}
+                      onPress={() => rooms > 1 && setRooms(rooms - 1)}
+                      disabled={rooms <= 1}
+                    >
+                      <Text style={[
+                        styles.numberButtonText, 
+                        rooms <= 1 && styles.numberButtonTextDisabled
+                      ]}>—</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberValue}
+                      onPress={() => {
+                        setCurrentSelectType('rooms');
+                        setIsNumberModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.numberValueText}>{rooms}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberButton}
+                      onPress={() => setRooms(rooms + 1)}
+                    >
+                      <Text style={styles.numberButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                {/* 成人数量 */}
+                <View style={styles.guestRow}>
+                  <Text style={styles.guestRowLabel}>成人数量</Text>
+                  <View style={styles.numberControl}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.numberButton, 
+                        adults <= 1 && styles.numberButtonDisabled
+                      ]}
+                      onPress={() => adults > 1 && setAdults(adults - 1)}
+                      disabled={adults <= 1}
+                    >
+                      <Text style={[
+                        styles.numberButtonText, 
+                        adults <= 1 && styles.numberButtonTextDisabled
+                      ]}>—</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberValue}
+                      onPress={() => {
+                        setCurrentSelectType('adults');
+                        setIsNumberModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.numberValueText}>{adults}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberButton}
+                      onPress={() => setAdults(adults + 1)}
+                    >
+                      <Text style={styles.numberButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                {/* 儿童数量 */}
+                <View style={styles.guestRow}>
+                  <Text style={styles.guestRowLabel}>儿童数量</Text>
+                  <View style={styles.numberControl}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.numberButton, 
+                        children <= 0 && styles.numberButtonDisabled
+                      ]}
+                      onPress={() => children > 0 && setChildren(children - 1)}
+                      disabled={children <= 0}
+                    >
+                      <Text style={[
+                        styles.numberButtonText, 
+                        children <= 0 && styles.numberButtonTextDisabled
+                      ]}>—</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberValue}
+                      onPress={() => {
+                        setCurrentSelectType('children');
+                        setIsNumberModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.numberValueText}>{children}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.numberButton}
+                      onPress={() => setChildren(children + 1)}
+                    >
+                      <Text style={styles.numberButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.confirmButton}
+                onPress={() => setIsGuestModalVisible(false)}
+              >
+                <Text style={styles.confirmButtonText}>确认</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      
+      {/* 数字选择弹窗 */}
+      <Modal
+        visible={isNumberModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsNumberModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsNumberModalVisible(false)}
+        >
+          <View style={styles.numberModalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {currentSelectType === 'rooms' ? '选择房间数量' : 
+                   currentSelectType === 'adults' ? '选择成人数量' : '选择儿童数量'}
+                </Text>
+                <TouchableOpacity onPress={() => setIsNumberModalVisible(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.numberGrid}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                  <TouchableOpacity 
+                    key={num}
+                    style={styles.numberGridItem}
+                    onPress={() => {
+                      if (currentSelectType === 'rooms') setRooms(num);
+                      else if (currentSelectType === 'adults') setAdults(num);
+                      else if (currentSelectType === 'children') setChildren(num);
+                      setIsNumberModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.numberGridItemText}>{num}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity 
+                  style={styles.numberGridItem}
+                  onPress={() => {
+                    // 显示输入弹窗
+                    setInputNumber('');
+                    setIsInputModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.numberGridItemText}>更多</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      
+      {/* 输入数字弹窗 */}
+      <Modal
+        visible={isInputModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsInputModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsInputModalVisible(false)}
+        >
+          <View style={styles.inputModalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {currentSelectType === 'rooms' ? '输入房间数量' : 
+                   currentSelectType === 'adults' ? '输入成人数量' : '输入儿童数量'}
+                </Text>
+                <TouchableOpacity onPress={() => setIsInputModalVisible(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.inputModalContent}>
+                <TextInput
+                  style={styles.inputField}
+                  value={inputNumber}
+                  onChangeText={setInputNumber}
+                  placeholder="请输入数量"
+                  keyboardType="numeric"
+                  autoFocus
+                />
+                <Text style={styles.inputHint}>最多输入30</Text>
+              </View>
+              
+              <View style={styles.inputModalFooter}>
+                <TouchableOpacity 
+                  style={[styles.inputModalButton, styles.inputModalCancelButton]}
+                  onPress={() => setIsInputModalVisible(false)}
+                >
+                  <Text style={styles.inputModalCancelButtonText}>取消</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.inputModalButton, styles.inputModalConfirmButton]}
+                  onPress={() => {
+                    const value = parseInt(inputNumber);
+                    if (value > 30) {
+                      Alert.alert('提示', '最多输入30');
+                      return;
+                    }
+                    if (value > 0) {
+                      if (currentSelectType === 'rooms') setRooms(value);
+                      else if (currentSelectType === 'adults') setAdults(value);
+                      else if (currentSelectType === 'children') setChildren(value);
+                      setIsInputModalVisible(false);
+                      setIsNumberModalVisible(false);
+                    }
+                  }}
+                >
+                  <Text style={styles.inputModalConfirmButtonText}>确认</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -561,6 +860,215 @@ const styles = StyleSheet.create({
   searchInputWithValue: {
     paddingTop: 16,
     paddingBottom: 8
+  },
+  // 清除按钮样式
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  clearButtonText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600'
+  },
+  // 客房和人数统计样式
+  guestInfoContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  guestInfoText: {
+    fontSize: 20,
+    color: '#333',
+    fontWeight: '600'
+  },
+  dropdownIcon: {
+    fontSize: 12,
+    color: '#999',
+    marginLeft: 8
+  },
+  // 弹窗样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end'
+  },
+  guestModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 30
+  },
+  numberModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 30
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee'
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  closeButton: {
+    fontSize: 20,
+    color: '#999',
+    padding: 4
+  },
+  modalContent: {
+    padding: 16
+  },
+  guestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12
+  },
+  guestRowLabel: {
+    fontSize: 14,
+    color: '#333'
+  },
+  numberControl: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  numberButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1890ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff'
+  },
+  numberButtonDisabled: {
+    borderColor: '#e0e0e0',
+    backgroundColor: '#f5f5f5'
+  },
+  numberButtonText: {
+    fontSize: 18,
+    color: '#1890ff',
+    fontWeight: '600'
+  },
+  numberButtonTextDisabled: {
+    color: '#999'
+  },
+  numberValue: {
+    minWidth: 40,
+    textAlign: 'center',
+    marginLeft: 16,
+    marginRight: -10
+  },
+  numberValueText: {
+    fontSize: 14,
+    color: '#333'
+  },
+  confirmButton: {
+    backgroundColor: '#1890ff',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 16
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600'
+  },
+  // 数字选择弹窗样式
+  numberGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 16
+  },
+  numberGridItem: {
+    width: '25%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  numberGridItemText: {
+    fontSize: 16,
+    color: '#333',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    minWidth: 40,
+    textAlign: 'center'
+  },
+  // 输入数字弹窗样式
+  inputModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 30
+  },
+  inputModalContent: {
+    padding: 16
+  },
+  inputField: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 8
+  },
+  inputHint: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right'
+  },
+  inputModalFooter: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16
+  },
+  inputModalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  inputModalCancelButton: {
+    backgroundColor: '#f5f5f5',
+    marginRight: 8
+  },
+  inputModalConfirmButton: {
+    backgroundColor: '#1890ff',
+    marginLeft: 8
+  },
+  inputModalCancelButtonText: {
+    fontSize: 16,
+    color: '#333'
+  },
+  inputModalConfirmButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600'
   }
 });
 

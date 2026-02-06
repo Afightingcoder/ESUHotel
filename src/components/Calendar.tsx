@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   datePart: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     color: '#333'
   },
