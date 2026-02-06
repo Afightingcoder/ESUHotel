@@ -14,16 +14,29 @@ interface CalendarProps {
   initialEndDate?: string;
 }
 
+// 获取今天的日期，格式为YYYY-MM-DD
+const getTodayDate = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+};
+
+// 获取明天的日期，格式为YYYY-MM-DD
+const getTomorrowDate = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+};
+
 const Calendar: React.FC<CalendarProps> = ({
   onDateSelect,
-  initialStartDate = '2026-03-10',
-  initialEndDate = '2026-03-11'
+  initialStartDate = getTodayDate(),
+  initialEndDate = getTomorrowDate()
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
-  const [currentMonth, setCurrentMonth] = useState(3); // 3月
-  const [currentYear, setCurrentYear] = useState(2026);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 当前月份
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear()); // 当前年份
 
   // 生成当月日期数组
   const generateDays = () => {
@@ -37,8 +50,8 @@ const Calendar: React.FC<CalendarProps> = ({
 
   // 计算居住晚数
   const calculateNights = () => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(startDate || initialStartDate);
+    const end = new Date(endDate || initialEndDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
@@ -130,6 +143,34 @@ const Calendar: React.FC<CalendarProps> = ({
   // 月份名称
   const monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 
+  // 格式化日期为显示格式
+  const formatDisplayDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // 重置时间部分，只比较日期
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    // 获取月份和日期
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // 检查是否是今天或明天
+    if (compareDate.getTime() === today.getTime()) {
+      return `${month}月${day}日 今天`;
+    } else if (compareDate.getTime() === tomorrow.getTime()) {
+      return `${month}月${day}日 明天`;
+    } else {
+      // 正常日期格式：x月x日 周x
+      const weekDay = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
+      return `${month}月${day}日 周${weekDay}`;
+    }
+  };
+
   return (
     <>
       {/* 日期显示和选择按钮 */}
@@ -137,9 +178,20 @@ const Calendar: React.FC<CalendarProps> = ({
         style={styles.calendarContainer}
         onPress={() => setIsVisible(true)}
       >
-        <Text style={styles.calendarText}>
-          {startDate && endDate ? `${startDate} 至 ${endDate}` : '选择日期'}
-        </Text>
+        <View style={styles.dateDisplayContainer}>
+          <Text style={styles.dateDisplayText}>
+            <Text style={styles.datePart}>{formatDisplayDate(startDate || initialStartDate).split(' ')[0]}</Text>
+            {formatDisplayDate(startDate || initialStartDate).split(' ')[1] && (
+              <Text style={styles.weekPart}> {formatDisplayDate(startDate || initialStartDate).split(' ')[1]}</Text>
+            )}
+            {' - '}
+            <Text style={styles.datePart}>{formatDisplayDate(endDate || initialEndDate).split(' ')[0]}</Text>
+            {formatDisplayDate(endDate || initialEndDate).split(' ')[1] && (
+              <Text style={styles.weekPart}> {formatDisplayDate(endDate || initialEndDate).split(' ')[1]}</Text>
+            )}
+          </Text>
+          <Text style={styles.nightsDisplay}>共 {calculateNights()} 晚</Text>
+        </View>
         <Text style={styles.calendarIcon}>📅</Text>
       </TouchableOpacity>
 
@@ -222,9 +274,6 @@ const styles = StyleSheet.create({
   calendarContainer: {
     flex: 1,
     height: 44,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,6 +287,31 @@ const styles = StyleSheet.create({
   },
   calendarIcon: {
     fontSize: 18
+  },
+  dateDisplayContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  dateDisplayText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1
+  },
+  datePart: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  weekPart: {
+    fontSize: 14,
+    color: '#666'
+  },
+  nightsDisplay: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8
   },
   // 模态框样式
   modalOverlay: {

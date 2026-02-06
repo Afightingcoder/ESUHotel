@@ -139,18 +139,24 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
       {/* 核心查询区域 */}
       <View style={styles.searchContainer}>
         {/* 当前地点 */}
-        <View style={styles.searchItem}>
-          <Text style={styles.searchLabel}>当前地点</Text>
+        <View style={styles.locationSearchItem}>
           <View style={styles.locationContainer}>
-            <TextInput
-              style={styles.searchInput}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="输入城市"
-              autoCapitalize="none"
-              keyboardType="default"
-              autoCorrect={false}
-            />
+            <View style={styles.floatingLabelInputContainer}>
+              {location ? (
+                <Text style={styles.floatingLabel}>位置</Text>
+              ) : null}
+              <TextInput
+                style={[styles.searchInput, location && styles.searchInputWithValue]}
+                value={location}
+                onChangeText={setLocation}
+                placeholder={!location ? "位置" : ""}
+                autoCapitalize="none"
+                keyboardType="default"
+                autoCorrect={false}
+              />
+            </View>
+            {/* 竖线分隔符 */}
+            <View style={styles.verticalDivider} />
             <TouchableOpacity 
               style={styles.locationButton} 
               onPress={async () => {
@@ -234,37 +240,47 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
               }}
             >
               <Text style={styles.locationIcon}>📍</Text>
+              <Text style={styles.locationText}>当前地点</Text>
             </TouchableOpacity>
           </View>
+          {/* 横线分隔符 */}
+          <View style={styles.horizontalDivider} />
         </View>
 
         {/* 关键字搜索 */}
         <View style={styles.searchItem}>
-          <Text style={styles.searchLabel}>关键字</Text>
-          <TextInput
-            style={styles.searchInput}
-            value={keyword}
-            onChangeText={setKeyword}
-            placeholder="酒店名称/商圈"
-            autoCapitalize="none"
-            keyboardType="default"
-            autoCorrect={false}
-          />
+          <Text style={styles.searchLabel}>🔍</Text>
+          <View style={styles.floatingLabelInputContainer}>
+            {keyword ? (
+              <Text style={styles.floatingLabel}>酒店/品牌</Text>
+            ) : null}
+            <TextInput
+              style={[styles.searchInput, keyword && styles.searchInputWithValue]}
+              value={keyword}
+              onChangeText={setKeyword}
+              placeholder={!keyword ? "酒店/品牌" : ""}
+              autoCapitalize="none"
+              keyboardType="default"
+              autoCorrect={false}
+            />
+          </View>
         </View>
+        {/* 横线分隔符 */}
+          <View style={styles.horizontalDivider} />
 
         {/* 日期选择 */}
         <View style={styles.searchItem}>
-          <Text style={styles.searchLabel}>入住日期</Text>
           <Calendar
             onDateSelect={handleDateSelect}
             initialStartDate={startDate}
             initialEndDate={endDate}
           />
         </View>
+        {/* 横线分隔符 */}
+          <View style={styles.horizontalDivider} />
 
         {/* 筛选条件（星级+价格） */}
         <View style={styles.filterContainer}>
-          <Text style={styles.filterLabel}>筛选条件</Text>
           <View style={styles.filterContent}>
             <View style={styles.starFilter}>
               <Text style={styles.filterSubLabel}>星级：</Text>
@@ -309,7 +325,6 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
 
         {/* 快捷标签 */}
         <View style={styles.tagsContainer}>
-          <Text style={styles.filterLabel}>快捷标签</Text>
           <View style={styles.tagsContent}>
             {quickTags.map(tag => (
               <TouchableOpacity key={tag.id} style={styles.quickTag}>
@@ -381,29 +396,41 @@ const styles = StyleSheet.create({
   searchItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    height: 44
+    height: 36
+  },
+  locationSearchItem: {
+    flexDirection: 'column',
+    marginBottom: 12
   },
   searchLabel: {
-    width: 60,
-    fontSize: 14,
+    fontSize: 18,
     color: '#333',
     fontWeight: '500'
   },
   searchInput: {
     flex: 1,
     height: 44,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
     paddingHorizontal: 12,
-    fontSize: 14
+    fontSize: 18
+  },
+  verticalDivider: {
+    width: 0.5,
+    height: '60%',
+    backgroundColor: '#ddd',
+    marginHorizontal: 8
+  },
+  horizontalDivider: {
+    width: '100%',
+    height: 0.5,
+    backgroundColor: '#eee',
+    marginTop: 8,
+    marginBottom: 8
   },
   // 当前地点容器样式
   locationContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
     height: 44
   },
   locationInput: {
@@ -427,25 +454,26 @@ const styles = StyleSheet.create({
     color: '#999'
   },
   locationButton: {
-    marginLeft: 12,
-    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     backgroundColor: '#e6f7ff',
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: 'center'
   },
   locationIcon: {
-    fontSize: 16
+    fontSize: 16,
+    marginRight: 6
+  },
+  locationText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1890ff'
   },
   // 筛选条件样式
   filterContainer: {
     marginBottom: 12
-  },
-  filterLabel: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-    marginBottom: 8
   },
   filterContent: {
     gap: 12
@@ -514,6 +542,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600'
+  },
+  // 浮动标签样式
+  floatingLabelInputContainer: {
+    flex: 1,
+    position: 'relative',
+    height: 44
+  },
+  floatingLabel: {
+    position: 'absolute',
+    top: -8,
+    left: 12,
+    fontSize: 12,
+    color: '#999',
+    backgroundColor: '#fff',
+    paddingHorizontal: 4
+  },
+  searchInputWithValue: {
+    paddingTop: 16,
+    paddingBottom: 8
   }
 });
 
