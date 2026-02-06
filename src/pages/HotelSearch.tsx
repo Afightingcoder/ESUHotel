@@ -55,6 +55,12 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
   // 输入数字状态
   const [inputNumber, setInputNumber] = useState<string>('');
   const [isInputModalVisible, setIsInputModalVisible] = useState<boolean>(false);
+  // 筛选弹窗状态
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState<boolean>(false);
+  // 价格区间选择状态（单选）
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  // 星级选择状态（多选）
+  const [selectedStars, setSelectedStars] = useState<number[]>([]);
 
   // 快捷标签数据
   const quickTags = [
@@ -317,55 +323,55 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
           <View style={styles.horizontalDivider} />
 
         {/* 筛选条件（星级+价格） */}
-        <View style={styles.filterContainer}>
-          <View style={styles.filterContent}>
-            <View style={styles.starFilter}>
-              <Text style={styles.filterSubLabel}>星级：</Text>
-              {[2, 3, 4, 5].map(star => (
-                <TouchableOpacity
-                  key={`star_${star}`}
-                  style={[
-                    styles.filterTag,
-                    filters.star.includes(star) && styles.filterTagActive
-                  ]}
-                  onPress={() => handleFilterChange('star', star)}
-                >
-                  <Text style={styles.filterTagText}>{star}星</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.priceFilter}>
-              <Text style={styles.filterSubLabel}>价格：</Text>
-              {
-                [
-                  { id: 1, label: '≤300', value: 300 },
-                  { id: 2, label: '300-600', value: 600 },
-                  { id: 3, label: '600-1000', value: 1000 },
-                  { id: 4, label: '≥1000', value: 1001 }
-                ].map(item => (
-                  <TouchableOpacity
-                    key={`price_${item.id}`}
-                    style={[
-                      styles.filterTag,
-                      filters.priceRange.includes(item.value) && styles.filterTagActive
-                    ]}
-                    onPress={() => handleFilterChange('price', item.value)}
-                  >
-                    <Text style={styles.filterTagText}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))
-              }
-            </View>
+        <TouchableOpacity 
+          style={styles.searchItem}
+          onPress={() => setIsFilterModalVisible(true)}
+        >
+          <Text style={styles.searchLabel}></Text>
+          <View style={styles.guestInfoContainer}>
+            <Text style={[styles.guestInfoText, !selectedPrice && selectedStars.length === 0 && styles.greyText]}>
+              {selectedPrice || selectedStars.length > 0 ? (
+                <>
+                  {selectedPrice ? (
+                    [
+                      { id: 1, label: '￥200以下', value: 200 },
+                      { id: 2, label: '￥200-￥350', value: 350 },
+                      { id: 3, label: '￥350-￥400', value: 400 },
+                      { id: 4, label: '￥400-￥500', value: 500 },
+                      { id: 5, label: '￥500-￥900', value: 900 },
+                      { id: 6, label: '￥900-￥1400', value: 1400 },
+                      { id: 7, label: '￥1400以上', value: 1401 }
+                    ].find(item => item.value === selectedPrice)?.label
+                  ) : ''}
+                  {selectedPrice && selectedStars.length > 0 ? ' · ' : ''}
+                  {selectedStars.length > 0 ? (
+                    selectedStars.map(star => `${star}星`).join(', ')
+                  ) : ''}
+                </>
+              ) : '价格/星级'}
+            </Text>
+            <Text style={styles.dropdownIcon}>▼</Text>
           </View>
-        </View>
+        </TouchableOpacity>
+        {/* 横线分隔符 */}
+          <View style={styles.horizontalDivider} />
 
         {/* 快捷标签 */}
         <View style={styles.tagsContainer}>
           <View style={styles.tagsContent}>
             {quickTags.map(tag => (
-              <TouchableOpacity key={tag.id} style={styles.quickTag}>
-                <Text style={styles.quickTagText}>{tag.name}</Text>
+              <TouchableOpacity 
+                key={tag.id} 
+                style={[
+                  styles.quickTag,
+                  keyword === tag.name && styles.quickTagActive
+                ]}
+                onPress={() => setKeyword(tag.name)}
+              >
+                <Text style={[
+                  styles.quickTagText,
+                  keyword === tag.name && styles.quickTagTextActive
+                ]}>{tag.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -644,6 +650,124 @@ const HotelSearchPage = ({ navigateTo }: { navigateTo: (route: RouteType, params
           </View>
         </TouchableOpacity>
       </Modal>
+      
+      {/* 筛选弹窗 */}
+      <Modal
+        visible={isFilterModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsFilterModalVisible(false)}
+        >
+          <View style={styles.filterModalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>选择价格/星级</Text>
+                <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.filterModalContent}>
+                {/* 价格区间 */}
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>价格</Text>
+                  <View style={styles.filterOptions}>
+                    {[
+                      { id: 1, label: '￥200以下', value: 200 },
+                      { id: 2, label: '￥200-￥350', value: 350 },
+                      { id: 3, label: '￥350-￥400', value: 400 },
+                      { id: 4, label: '￥400-￥500', value: 500 },
+                      { id: 5, label: '￥500-￥900', value: 900 },
+                      { id: 6, label: '￥900-￥1400', value: 1400 },
+                      { id: 7, label: '￥1400以上', value: 1401 }
+                    ].map(item => (
+                      <TouchableOpacity
+                        key={`price_${item.id}`}
+                        style={[
+                          styles.filterOptionItem,
+                          selectedPrice === item.value && styles.filterOptionItemActive
+                        ]}
+                        onPress={() => setSelectedPrice(item.value)}
+                      >
+                        <Text style={[
+                          styles.filterOptionText,
+                          selectedPrice === item.value && styles.filterOptionTextActive
+                        ]}>{item.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                {/* 星级/钻级 */}
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>星级/钻级</Text>
+                  <View style={styles.filterOptions}>
+                    {[
+                      { id: 1, label: '2星及以下', value: 2, desc: '经济' },
+                      { id: 2, label: '3星', value: 3, desc: '舒适' },
+                      { id: 3, label: '4星', value: 4, desc: '高档' },
+                      { id: 4, label: '5星', value: 5, desc: '豪华' }
+                    ].map(item => (
+                      <TouchableOpacity
+                        key={`star_${item.id}`}
+                        style={[
+                          styles.filterOptionItem,
+                          selectedStars.includes(item.value) && styles.filterOptionItemActive
+                        ]}
+                        onPress={() => {
+                          if (selectedStars.includes(item.value)) {
+                            setSelectedStars(selectedStars.filter(star => star !== item.value));
+                          } else {
+                            setSelectedStars([...selectedStars, item.value]);
+                          }
+                        }}
+                      >
+                        <View>
+                          <Text style={[
+                            styles.filterOptionText,
+                            selectedStars.includes(item.value) && styles.filterOptionTextActive
+                          ]}>{item.label}</Text>
+                          <Text style={styles.filterOptionDesc}>{item.desc}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.filterModalFooter}>
+                <TouchableOpacity 
+                  style={[styles.filterModalButton, styles.filterModalClearButton]}
+                  onPress={() => {
+                    setSelectedPrice(null);
+                    setSelectedStars([]);
+                  }}
+                >
+                  <Text style={styles.filterModalClearButtonText}>清空</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.filterModalButton, styles.filterModalConfirmButton]}
+                  onPress={() => {
+                    // 将选择结果应用到filters状态
+                    setFilters({
+                      star: selectedStars,
+                      priceRange: selectedPrice ? [selectedPrice] : []
+                    });
+                    setIsFilterModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.filterModalConfirmButtonText}>完成</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -821,11 +945,17 @@ const styles = StyleSheet.create({
   quickTag: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#f5fafe',
+    backgroundColor: '#f5f5f5',
     borderRadius: 20
+  },
+  quickTagActive: {
+    backgroundColor: '#e6f7ff'
   },
   quickTagText: {
     fontSize: 12,
+    color: '#333'
+  },
+  quickTagTextActive: {
     color: '#1890ff'
   },
   // 搜索按钮样式
@@ -895,6 +1025,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginLeft: 8
+  },
+  greyText: {
+    color: '#999'
   },
   // 弹窗样式
   modalOverlay: {
@@ -1066,6 +1199,98 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   inputModalConfirmButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600'
+  },
+  // 筛选弹窗样式
+  filterModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 30,
+    maxHeight: '80%'
+  },
+  filterModalContent: {
+    padding: 16,
+    maxHeight: 400
+  },
+  filterSection: {
+    marginBottom: 24
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12
+  },
+  filterOptions: {
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap'
+  },
+  filterOptionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+    minWidth: 120
+  },
+  filterOptionItemActive: {
+    borderColor: '#1890ff',
+    backgroundColor: 'rgba(24, 144, 255, 0.05)'
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: '#333'
+  },
+  filterOptionTextActive: {
+    color: '#1890ff',
+    fontWeight: '500'
+  },
+  filterOptionDesc: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#1890ff',
+    fontWeight: '600'
+  },
+  filterModalFooter: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee'
+  },
+  filterModalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  filterModalClearButton: {
+    backgroundColor: '#f5f5f5',
+    marginRight: 8
+  },
+  filterModalConfirmButton: {
+    backgroundColor: '#1890ff',
+    marginLeft: 8
+  },
+  filterModalClearButtonText: {
+    fontSize: 16,
+    color: '#333'
+  },
+  filterModalConfirmButtonText: {
     fontSize: 16,
     color: '#fff',
     fontWeight: '600'
