@@ -7,8 +7,8 @@ import {SafeAreaView, useColorScheme, StatusBar} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 // 导入页面组件
-import HotelSearch from './src/pages/HotelSearch';
-import HotelList from './src/pages/HotelList';
+import HotelSearch from './src/pages/HotelSearch/HotelSearch';
+import HotelList from './src/pages/HotelList/HotelList';
 import HotelDetail from './src/pages/HotelDetail';
 
 // 导入类型定义
