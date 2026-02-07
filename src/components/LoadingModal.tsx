@@ -5,7 +5,7 @@ import {
   Modal,
   ActivityIndicator,
   StyleSheet,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 
 interface LoadingModalProps {
@@ -13,30 +13,26 @@ interface LoadingModalProps {
   message?: string;
 }
 
-const { width, height } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
-const LoadingModal: React.FC<LoadingModalProps> = ({ 
-  visible, 
-  message = '正在处理中...' 
+const LoadingModal: React.FC<LoadingModalProps> = ({
+  visible,
+  message = '正在处理中...',
 }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-    >
+    <Modal visible={visible} transparent={true} animationType="fade">
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           {/* 加载动画 */}
-          <ActivityIndicator 
-            size="large" 
-            color="#1890ff" 
+          <ActivityIndicator
+            size="large"
+            color="#1890ff"
             style={styles.loader}
           />
-          
+
           {/* 加载文本 */}
           <Text style={styles.message}>{message}</Text>
-          
+
           {/* 辅助文本 */}
           <Text style={styles.helperText}>请稍候...</Text>
         </View>

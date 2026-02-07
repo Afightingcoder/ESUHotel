@@ -1,42 +1,69 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   FlatList,
   Image,
-  StyleSheet
+  StyleSheet,
+  Modal,
 } from 'react-native';
-import type { RouteType, HotelType } from '../types';
-import { mockHotels } from '../data/mockData';
+import type {RouteType, HotelType} from '../types';
+import {mockHotels} from '../data/mockData';
+// 导入react-native-amap-geolocation库
+// import {init} from 'react-native-amap-geolocation';
+import LocationSelector from '../components/LocationSelector';
+import DateSelector from '../components/DateSelector';
+import GuestSelector from '../components/GuestSelector';
+import {formatDate} from '../utils/dateUtils';
 
 const HotelListPage = ({
   navigateTo,
-  // navigateBack,
   routeParams
 }: {
   navigateTo: (route: RouteType, params?: any) => void;
-  // navigateBack: () => void;
   routeParams: any;
 }) => {
   const [hotels, setHotels] = useState<HotelType[]>(mockHotels);
   const [page, setPage] = useState<number>(1);
 
+  // 状态变量
+  const [location, setLocation] = useState<string>(routeParams?.location || '');
+  const [startDate, setStartDate] = useState<string>(
+    routeParams?.startDate || '',
+  );
+  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || '');
+  console.log('startDate', startDate);
+  console.log('endDate', endDate);
+  const [rooms, setRooms] = useState<number>(1);
+  const [adults, setAdults] = useState<number>(1);
+  const [children, setChildren] = useState<number>(0);
+  // 搜索框输入内容
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+
+  // 弹窗状态
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+
+
   // 上滑加载更多（模拟）
   const handleLoadMore = () => {
     setTimeout(() => {
-      setHotels(prev => [...prev, ...mockHotels.map(hotel => ({ ...hotel, id: `${hotel.id}_${page + 1}` }))]);
+      setHotels(prev => [
+        ...prev,
+        ...mockHotels.map(hotel => ({...hotel, id: `${hotel.id}_${page + 1}`})),
+      ]);
       setPage(prev => prev + 1);
     }, 1000);
   };
 
   // 渲染酒店列表项
-  const renderHotelItem = ({ item }: { item: HotelType }) => (
+  const renderHotelItem = ({item}: {item: HotelType}) => (
     <TouchableOpacity
       style={styles.hotelItem}
-      onPress={() => navigateTo('detail', { hotelId: item.id })}
-    >
-      <Image source={{ uri: item.mainImage }} style={styles.hotelImage} />
+      onPress={() => navigateTo('detail', {hotelId: item.id})}>
+      <Image source={{uri: item.mainImage}} style={styles.hotelImage} />
       <View style={styles.hotelInfo}>
         <View style={styles.hotelNameContainer}>
           <Text style={styles.hotelName}>{item.name.cn}</Text>
@@ -45,7 +72,9 @@ const HotelListPage = ({
         <Text style={styles.hotelAddress}>{item.address}</Text>
         <View style={styles.hotelTags}>
           {item.tags.slice(0, 2).map((tag, idx) => (
-            <Text key={idx} style={styles.hotelTagText}>#{tag}</Text>
+            <Text key={idx} style={styles.hotelTagText}>
+              #{tag}
+            </Text>
           ))}
         </View>
         <View style={styles.hotelPriceContainer}>
@@ -64,16 +93,57 @@ const HotelListPage = ({
     <View style={styles.pageContainer}>
       {/* 顶部核心筛选头 */}
       <View style={styles.listFilterHeader}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigateTo('hotelSearch')}>
-          <Text style={styles.backBtnText}>← 返回</Text>
-        </TouchableOpacity>
-        <Text style={styles.filterHeaderText}>{routeParams.location}</Text>
-        <Text style={styles.filterHeaderText}>{routeParams.checkDate}</Text>
-        <TouchableOpacity style={styles.filterBtn}>
+        <View style={styles.headerLeftContent}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigateTo('hotelSearch')}>
+            <Text style={styles.backBtnText}>←</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerInfoItem}
+            onPress={() => {
+              setIsModalVisible(true);
+            }}>
+            <Text style={styles.headerInfoText} numberOfLines={2}>{location}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerInfoItem}
+            onPress={() => {
+              setIsModalVisible(true);
+            }}>
+            <Text style={styles.headerInfoText} numberOfLines={2}>{ `住 ${formatDate(startDate)} 离 ${formatDate(endDate)}`}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerInfoItem}
+            onPress={() => {
+              setIsModalVisible(true);
+            }}>
+            <Text style={[styles.headerInfoText, {maxWidth: 20}]}>
+              {rooms}间{adults}人
+          </Text>
+          </TouchableOpacity>
+          {/* 搜索框 */}
+          <View style={styles.searchBoxContainer}>
+            <View style={styles.searchInputWrapper}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchBox}
+                value={searchKeyword}
+                onChangeText={setSearchKeyword}
+                placeholder="酒店/品牌"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                keyboardType="default"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+        <TouchableOpacity
+          style={styles.filterBtn}>
           <Text style={styles.filterBtnText}>筛选 ▼</Text>
         </TouchableOpacity>
-      </View>
-
       {/* 酒店列表（支持上滑加载） */}
       <FlatList
         data={hotels}
@@ -87,6 +157,74 @@ const HotelListPage = ({
           </View>
         )}
       />
+
+      {/* 顶部固定的蒙层弹窗 */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+
+              <View style={styles.modalContent}>
+                {/* 位置选择 */}
+                  <View style={styles.locationModalContent}>
+                    <LocationSelector
+                      value={location}
+                      onChange={setLocation}
+                      placeholder="输入城市"
+                    />
+                  </View>
+                  <View style={styles.horizontalDivider} />
+
+                {/* 日期选择 */}
+                  <View style={styles.searchItem}>
+                    <DateSelector
+                      startDate={startDate}
+                      endDate={endDate}
+                      onDateSelect={(start, end) => {
+                        setStartDate(start);
+                        setEndDate(end);
+                      }}
+                    />
+                  </View>
+
+                {/* 横线分隔符 */}
+                        <View style={styles.horizontalDivider} />
+                
+                        {/* 客房和人数统计 */}
+                        <TouchableOpacity
+                          style={styles.searchItem}
+                          onPress={() => setIsGuestModalVisible(true)}>
+                          <Text style={styles.searchLabel}>👥</Text>
+                          <View style={styles.guestInfoContainer}>
+                            <Text style={styles.guestInfoText}>
+                              {rooms}间房 · {adults}成人 · {children}儿童
+                            </Text>
+                            <Text style={styles.dropdownIcon}>▼</Text>
+                          </View>
+                        </TouchableOpacity>
+                
+              </View>
+
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                  // 关闭弹窗
+                  setIsModalVisible(false);
+                  // 这里可以添加数据更新的逻辑，例如重新加载酒店列表等
+                }}>
+                <Text style={styles.confirmButtonText}>确认</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -94,7 +232,7 @@ const HotelListPage = ({
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f5f5f5',
   },
   // 列表页筛选头样式
   listFilterHeader: {
@@ -104,32 +242,75 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    borderBottomColor: '#eee',
+  },
+  headerLeftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   backBtn: {
-    width: 60,
+    // width: 60,
+    marginRight: 8,
   },
   backBtnText: {
     fontSize: 14,
     color: '#333',
-    fontWeight: '500'
+    fontWeight: '500',
   },
   filterHeaderText: {
     fontSize: 12,
     color: '#333',
     flexWrap: 'wrap',
-    width: '20%'
+    width: '20%',
   },
   filterBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 1,
     borderColor: '#eee',
-    borderRadius: 4
+    borderRadius: 4,
+    alignSelf: 'flex-end', 
   },
   filterBtnText: {
     fontSize: 12,
-    color: '#333'
+    color: '#333',
+  },
+  headerInfoItem: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 0,
+  },
+  headerInfoText: {
+    fontSize: 12,
+    color: '#333',
+    textAlign: 'left' as const,
+    maxWidth: 50
+  },
+  searchBoxContainer: {
+    marginLeft: 8,
+    flex: 1,
+    maxWidth: 200,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  searchIcon: {
+    fontSize: 12,
+    color: '#999',
+    marginRight: 6,
+  },
+  searchBox: {
+    flex: 1,
+    fontSize: 12,
+    color: '#333',
+    padding: 0,
   },
   // 酒店列表项样式
   hotelItem: {
@@ -140,30 +321,30 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
-    shadowRadius: 4
+    shadowRadius: 4,
   },
   hotelImage: {
     width: 100,
     height: 120,
-    resizeMode: 'cover'
+    resizeMode: 'cover',
   },
   hotelInfo: {
     flex: 1,
     padding: 12,
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   hotelNameContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   hotelName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    maxWidth: '80%'
+    maxWidth: '80%',
   },
   hotelStar: {
     fontSize: 12,
@@ -172,16 +353,16 @@ const styles = StyleSheet.create({
     borderColor: '#ff9500',
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 1
+    paddingVertical: 1,
   },
   hotelAddress: {
     fontSize: 12,
     color: '#666',
-    marginVertical: 4
+    marginVertical: 4,
   },
   hotelTags: {
     flexDirection: 'row',
-    gap: 6
+    gap: 6,
   },
   hotelTagText: {
     fontSize: 10,
@@ -189,44 +370,184 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(24,144,255,0.1)',
     paddingHorizontal: 4,
     paddingVertical: 1,
-    borderRadius: 2
+    borderRadius: 2,
   },
   hotelPriceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   hotelScore: {
     fontSize: 12,
     color: '#ff9500',
-    fontWeight: '500'
+    fontWeight: '500',
   },
   priceWrapper: {
-    alignItems: 'flex-end'
+    alignItems: 'flex-end',
   },
   hotelPriceSymbol: {
     fontSize: 12,
     color: '#ff4d4f',
-    fontWeight: '500'
+    fontWeight: '500',
   },
   hotelPrice: {
     fontSize: 18,
     color: '#ff4d4f',
-    fontWeight: '600'
+    fontWeight: '600',
   },
   hotelPriceDesc: {
     fontSize: 10,
-    color: '#666'
+    color: '#666',
   },
   // 加载更多样式
   loadMoreFooter: {
     padding: 16,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   loadMoreText: {
     fontSize: 14,
-    color: '#666'
-  }
+    color: '#666',
+  },
+  // 弹窗样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    marginTop: 66,
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    width: '100%',
+    maxHeight: '80%',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  modalContent: {
+    padding: 16,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  locationModalContent: {
+    // 位置选择内容样式
+  },
+  locationInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 44,
+  },
+  locationInput: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+  },
+  verticalDivider: {
+    width: 0.5,
+    height: '60%',
+    backgroundColor: '#ddd',
+    marginHorizontal: 8,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 20,
+    justifyContent: 'center',
+  },
+  locationIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  locationButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1890ff',
+  },
+  horizontalDivider: {
+    width: '100%',
+    height: 0.5,
+    backgroundColor: '#eee',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  searchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 36,
+  },
+  guestModalContent: {
+    // 客房和人数选择内容样式
+  },
+  confirmButton: {
+    backgroundColor: '#1890ff',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  // 客房和人数选择样式
+  guestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  guestRowLabel: {
+    fontSize: 14,
+    color: '#333',
+  },
+  numberControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  numberButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1890ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  numberButtonDisabled: {
+    borderColor: '#e0e0e0',
+    backgroundColor: '#f5f5f5',
+  },
+  numberButtonText: {
+    fontSize: 18,
+    color: '#1890ff',
+    fontWeight: '600',
+  },
+  numberButtonTextDisabled: {
+    color: '#999',
+  },
+  numberValue: {
+    minWidth: 40,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  numberValueText: {
+    fontSize: 14,
+    color: '#333',
+  },
 });
 
 export default HotelListPage;

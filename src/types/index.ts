@@ -4,7 +4,7 @@ export type RouteType = 'search' | 'list' | 'detail';
 // 酒店类型
 export type HotelType = {
   id: string;
-  name: { cn: string; en: string };
+  name: {cn: string; en: string};
   star: number;
   address: string;
   price: number;
