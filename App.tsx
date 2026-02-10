@@ -27,12 +27,12 @@ const App = () => {
   };
 
   // 返回上一页
-  const navigateBack = () => {
+  const navigateBack = (params?: any) => {
     if (currentRoute === 'list') {
       navigateTo('search');
     }
     if (currentRoute === 'detail') {
-      navigateTo('list', routeParams);
+      navigateTo('list', params || routeParams);
     }
   };
 

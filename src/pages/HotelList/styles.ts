@@ -145,7 +145,8 @@ export const styles = StyleSheet.create({
   },
   hotelPriceContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   hotelScore: {
@@ -154,7 +155,8 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
   priceWrapper: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   hotelPriceSymbol: {
     fontSize: 12,

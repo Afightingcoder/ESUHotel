@@ -237,28 +237,30 @@ const Calendar: React.FC<CalendarProps> = ({
         style={styles.calendarContainer}
         onPress={() => setIsVisible(true)}>
         <View style={styles.dateDisplayContainer}>
-          <Text style={styles.dateDisplayText}>
-            <Text style={styles.datePart}>
-              {formatDisplayDate(startDate || initialStartDate).split(' ')[0]}
-            </Text>
-            {formatDisplayDate(startDate || initialStartDate).split(' ')[1] && (
-              <Text style={styles.weekPart}>
-                {' '}
-                {formatDisplayDate(startDate || initialStartDate).split(' ')[1]}
+          <View style={styles.dateRow}>
+            <View style={styles.dateItem}>
+              <Text style={styles.datePart}>
+                {formatDisplayDate(startDate || initialStartDate).split(' ')[0]}
               </Text>
-            )}
-            {' - '}
-            <Text style={styles.datePart}>
-              {formatDisplayDate(endDate || initialEndDate).split(' ')[0]}
-            </Text>
-            {formatDisplayDate(endDate || initialEndDate).split(' ')[1] && (
-              <Text style={styles.weekPart}>
-                {' '}
-                {formatDisplayDate(endDate || initialEndDate).split(' ')[1]}
+              {formatDisplayDate(startDate || initialStartDate).split(' ')[1] && (
+                <Text style={styles.weekPart}>
+                  {formatDisplayDate(startDate || initialStartDate).split(' ')[1]}
+                </Text>
+              )}
+            </View>
+            <Text style={styles.dateSeparator}> - </Text>
+            <View style={styles.dateItem}>
+              <Text style={styles.datePart}>
+                {formatDisplayDate(endDate || initialEndDate).split(' ')[0]}
               </Text>
-            )}
-          </Text>
-          <Text style={styles.nightsDisplay}>共 {calculateNights()} 晚</Text>
+              {formatDisplayDate(endDate || initialEndDate).split(' ')[1] && (
+                <Text style={styles.weekPart}>
+                  {formatDisplayDate(endDate || initialEndDate).split(' ')[1]}
+                </Text>
+              )}
+            </View>
+            <Text style={styles.nightsDisplay}>共 {calculateNights()} 晚</Text>
+          </View>
         </View>
         <Text style={styles.calendarIcon}>📅</Text>
       </TouchableOpacity>
@@ -356,26 +358,33 @@ const styles = StyleSheet.create({
   },
   dateDisplayContainer: {
     flex: 1,
+  },
+  dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
   },
-  dateDisplayText: {
+  dateItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateSeparator: {
     fontSize: 14,
     color: '#333',
-    flex: 1,
+    marginHorizontal: 4,
   },
   datePart: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
   },
   weekPart: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
+    marginLeft: 4,
   },
   nightsDisplay: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginLeft: 8,
   },

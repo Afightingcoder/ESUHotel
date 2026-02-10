@@ -16,6 +16,7 @@ import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestSelector from '../../components/GuestSelector';
 import {formatDate} from '../../utils/dateUtils';
+import {BASE_URL} from '../../utils/api';
 import {styles} from './styles';
 
 const HotelListPage = ({
@@ -25,20 +26,40 @@ const HotelListPage = ({
   navigateTo: (route: RouteType, params?: any) => void;
   routeParams: any;
 }) => {
-  const [hotels, setHotels] = useState<HotelType[]>(mockHotels);
-  const [page, setPage] = useState<number>(1);
-
   // 状态变量
+  // const [page, setPage] = useState<number>(1);
   const [location, setLocation] = useState<string>(routeParams?.location || '');
   const [startDate, setStartDate] = useState<string>(
     routeParams?.startDate || '',
   );
   const [endDate, setEndDate] = useState<string>(routeParams?.endDate || '');
-  console.log('startDate', startDate);
-  console.log('endDate', endDate);
-  const [rooms, setRooms] = useState<number>(1);
-  const [adults, setAdults] = useState<number>(1);
-  const [children, setChildren] = useState<number>(0);
+  const [hotels, setHotels] = useState<HotelType[]>(routeParams?.hotels || []);
+  const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
+  const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
+  const [children, setChildren] = useState<number>(routeParams?.children || 0);
+
+  // 处理从详情页返回的数据更新
+  React.useEffect(() => {
+    console.log('接收到的routeParams:', routeParams);
+    
+    // 检查是否有updatedData字段
+    if (routeParams?.updatedData) {
+      console.log('接收到的更新数据:', routeParams.updatedData);
+      const { startDate: updatedStartDate, endDate: updatedEndDate, rooms: updatedRooms, adults: updatedAdults, children: updatedChildren, hotels: hotels, location: location } = routeParams.updatedData;
+      if (updatedStartDate) setStartDate(updatedStartDate);
+      if (updatedEndDate) setEndDate(updatedEndDate);
+      if (location) setLocation(location);
+      if (updatedRooms) setRooms(updatedRooms);
+      if (updatedAdults) setAdults(updatedAdults);
+      if (updatedChildren) setChildren(updatedChildren);
+      if (hotels) setHotels(hotels);
+    }
+  }, [routeParams, setStartDate, setEndDate, setRooms, setAdults, setChildren, setHotels, setLocation]); 
+
+  // 初始化酒店数据 - 不使用模拟数据，只使用接口返回的数据
+  React.useEffect(() => {
+    console.log('酒店列表数据:', hotels);
+  }, [hotels]);
   // 搜索框输入内容
   const [searchKeyword, setSearchKeyword] = useState<string>('');
 
@@ -60,42 +81,63 @@ const HotelListPage = ({
     setTimeout(() => {
       setHotels(prev => [
         ...prev,
-        ...mockHotels.map(hotel => ({...hotel, id: `${hotel.id}_${page + 1}`})),
+        // ...mockHotels.map(hotel => ({...hotel, id: `${hotel.id}_${page + 1}`})),
       ]);
-      setPage(prev => prev + 1);
+      // setPage(prev => prev + 1);
     }, 1000);
   };
 
   // 渲染酒店列表项
-  const renderHotelItem = ({item}: {item: HotelType}) => (
-    <TouchableOpacity
-      style={styles.hotelItem}
-      onPress={() => navigateTo('detail', {hotelId: item.id})}>
-      <Image source={{uri: item.mainImage}} style={styles.hotelImage} />
-      <View style={styles.hotelInfo}>
-        <View style={styles.hotelNameContainer}>
-          <Text style={styles.hotelName}>{item.name.cn}</Text>
-          <Text style={styles.hotelStar}>{item.star}星</Text>
-        </View>
-        <Text style={styles.hotelAddress}>{item.address}</Text>
-        <View style={styles.hotelTags}>
-          {item.tags.slice(0, 2).map((tag, idx) => (
-            <Text key={idx} style={styles.hotelTagText}>
-              #{tag}
+  const renderHotelItem = ({item}: {item: HotelType}) => {
+    const handlePress = async () => {
+      try {
+        // 请求酒店详情API
+        const response = await fetch(`${BASE_URL}/hotels/detail/${item.id}`); 
+
+        if (response.ok) {
+          const hotelDetail = await response.json();
+          console.log('===详情', hotelDetail.data.roomTypes);
+          // 导航到详情页并传递酒店详情数据，同时保留hotels数据
+          navigateTo('detail', {hotelId: item.id, hotelDetail: hotelDetail.data, startDate, endDate, rooms, adults, children, hotels, location});
+        } else {
+          // API请求失败，使用现有的item数据作为后备
+        console.log('API请求失败，使用现有数据');
+        navigateTo('detail', {hotelId: item.id, startDate, endDate, rooms, adults, children, hotels});
+        }
+      } catch (error) {
+        // 网络错误，使用现有的item数据作为后备
+        console.error('网络请求错误:', error);
+        navigateTo('detail', {hotelId: item.id, startDate, endDate, rooms, adults, children, hotels});
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.hotelItem}
+        onPress={handlePress}>
+        <Image source={{uri: item.roomTypes[0].photos[0]}} style={styles.hotelImage} />
+        <View style={styles.hotelInfo}>
+          <View style={styles.hotelNameContainer}>
+            <Text style={styles.hotelName}>{item.name}</Text>
+            <Text style={styles.hotelStar}>{item.star}星</Text>
+          </View>
+          <Text style={styles.hotelAddress}>{item.address}</Text>
+          <View style={styles.hotelTags}>
+            <Text style={styles.hotelTagText}>
+              #{item.nearbyInfo}
             </Text>
-          ))}
-        </View>
-        <View style={styles.hotelPriceContainer}>
-          <Text style={styles.hotelScore}>{item.score}分</Text>
-          <View style={styles.priceWrapper}>
-            <Text style={styles.hotelPriceSymbol}>¥</Text>
-            <Text style={styles.hotelPrice}>{item.price}</Text>
-            <Text style={styles.hotelPriceDesc}>起/晚</Text>
+          </View>
+          <View style={styles.hotelPriceContainer}>
+            <View style={styles.priceWrapper}>
+              <Text style={styles.hotelPriceSymbol}>¥</Text>
+              <Text style={styles.hotelPrice}>{item.roomTypes[0].price}</Text>
+              <Text style={styles.hotelPriceDesc}>起/晚</Text>
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.pageContainer}>

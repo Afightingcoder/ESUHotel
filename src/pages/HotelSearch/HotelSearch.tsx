@@ -16,6 +16,7 @@ import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestSelector from '../../components/GuestSelector';
 import {formatDate} from '../../utils/dateUtils';
+import {getHotelList} from '../../utils/api';
 import {styles} from './styles';
 // 导入react-native-amap-geolocation库
 import {init} from 'react-native-amap-geolocation';
@@ -112,16 +113,29 @@ const HotelSearchPage = ({
   };
 
   // 提交查询
-  const handleSearch = () => {
-    const formattedStart = formatDate(startDate);
-    const formattedEnd = formatDate(endDate);
-    navigateTo('list', {
-      location,
-      keyword,
-      filters,
-      startDate: formattedStart,
-      endDate: formattedEnd,
-    });
+  const handleSearch = async () => {
+    try {
+      // 调用API获取酒店列表
+      const hotelList = await getHotelList();
+      console.log('获取酒店列表成功:', hotelList);
+      
+      // 格式化日期
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
+      
+      // 导航到列表页
+      navigateTo('list', {
+        location,
+        keyword,
+        filters,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        hotels: hotelList, // 传递获取到的酒店列表
+      });
+    } catch (error) {
+      console.error('获取酒店列表失败:', error);
+      Alert.alert('查询失败', '获取酒店列表时出现错误，请稍后重试');
+    }
   };
 
   return (
@@ -131,7 +145,7 @@ const HotelSearchPage = ({
         style={styles.bannerContainer}
         onPress={() => navigateTo('detail', {hotelId: 'hotel_001'})}>
         <ImageBackground
-          source={{uri: 'https://picsum.photos/id/1031/1200/300'}}
+          source={{uri: 'https://ts1.tc.mm.bing.net/th/id/OIP-C.b3C-zpD6bQAuMtZxbYsTSgHaFj?rs=1&pid=ImgDetMain&o=7&rm=3'}}
           style={styles.bannerImage}>
           <View style={styles.bannerOverlay}>
             <Text style={styles.bannerTitle}>上海陆家嘴玥酒店</Text>

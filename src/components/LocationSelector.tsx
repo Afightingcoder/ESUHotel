@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     width: '100%',
     height: 44,
   },
@@ -188,15 +188,16 @@ const styles = StyleSheet.create({
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingLeft: 4,
+    paddingRight: 8,
+    paddingVertical: 6,
     backgroundColor: '#e6f7ff',
     borderRadius: 20,
     justifyContent: 'center',
   },
   locationIcon: {
     fontSize: 16,
-    marginRight: 6,
+    marginRight: 2,
   },
   locationButtonText: {
     fontSize: 14,

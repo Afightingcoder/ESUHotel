@@ -4,19 +4,30 @@ export type RouteType = 'search' | 'list' | 'detail';
 // 酒店类型
 export type HotelType = {
   id: string;
-  name: {cn: string; en: string};
+  name: string;
+  nameEn: string;
   star: number;
   address: string;
-  price: number;
-  score: number;
-  tags: string[];
-  mainImage: string;
-  images: string[];
-  facilities: string[];
+  openingDate: string;
+  photos: string[];
+  nearbyInfo: string;
+  status: string;
+  rejectReason: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  ownerId: string;
   roomTypes: {
     id: string;
     name: string;
     price: number;
-    desc: string;
+    stock: number;
+    photos: string[];
   }[];
+  createTime: {
+    $date: string;
+  };
+  updateTime: {
+    $date: string;
+  };
+  __v: number;
 };
