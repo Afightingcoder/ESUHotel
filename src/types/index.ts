@@ -9,19 +9,30 @@ export type HotelType = {
   star: number;
   address: string;
   openingDate: string;
-  photos: string[];
-  nearbyInfo: string;
+  photos: {
+    url: string;
+    isPrimary: boolean;
+  }[];
+  amenities: string[];
   status: string;
   rejectReason: string;
   isActive: boolean;
   isDeleted: boolean;
   ownerId: string;
   roomTypes: {
-    id: string;
+    _id: {
+      $oid: string;
+    };
     name: string;
     price: number;
     stock: number;
-    photos: string[];
+    capacity: number;
+    bedType: string;
+    tags: string[];
+    photos: {
+      url: string;
+      isPrimary: boolean;
+    }[];
   }[];
   createTime: {
     $date: string;

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect, useMemo, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,40 @@ import {
   Image,
   StyleSheet,
   Modal,
+  Dimensions,
 } from 'react-native';
 import Calendar from '../components/Calendar';
 import GuestSelector from '../components/GuestSelector';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+
+// 酒店设施映射关系
+const amenitiesMap: Record<string, string> = {
+  WiFi: "WiFi",
+  Parking: "停车场",
+  Breakfast: "早餐",
+  Family: "亲子友好",
+  Gym: "健身房",
+  Pool: "泳池",
+  Pets: "可带宠物",
+  Airport: "机场接送",
+};
+
+// 房型设施标签映射关系
+const roomTagsMap: Record<string, string> = {
+  breakfast: "含早餐",
+  cancel: "免费取消",
+  window: "有窗",
+  bathroom: "独立卫浴",
+  wifi: "免费WiFi",
+};
+
+// 床型映射关系
+const bedTypeMap: Record<string, string> = {
+  big: "1.8m 大床",
+  double: "1.2m 双床",
+  king: "2.0m 超大床",
+};
 
 const HotelDetailPage = ({
   navigateBack,
@@ -21,7 +52,11 @@ const HotelDetailPage = ({
 }) => {
   // 获取当前酒店数据 - 不使用模拟数据，只使用接口返回的数据
   const currentHotel = routeParams?.hotelDetail;
-    console.log('===接收详情',currentHotel, '地点=====',routeParams?.location);
+  
+  // 只在组件首次挂载时输出调试信息
+  useEffect(() => {
+    console.log('===接收详情', currentHotel, '地点=====', routeParams?.location);
+  }, []); // 空依赖数组，只在挂载时执行一次
 
   // 日期状态管理
   const [startDate, setStartDate] = useState<string>(routeParams?.startDate || '2026-03-10');
@@ -34,12 +69,95 @@ const HotelDetailPage = ({
   
   // 弹窗状态
   const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
-
+  
+  // 轮播图状态
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const flatListRef = useRef<FlatList>(null);
+  const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   };
+  
+  // 使用useMemo缓存轮播图数据，避免每次渲染都重新计算
+  const bannerData = useMemo(() => {
+    const data = currentHotel?.photos && currentHotel.photos.length > 0
+      ? currentHotel.photos
+          .map((photo: any) => photo?.url)
+          .filter((url: string) => url && url.trim())
+      : ['https://picsum.photos/id/1031/800/400'];
+    
+    // 只在数据变化时输出
+    console.log('----轮播图数据更新---', data.length, '张图片');
+    return data;
+  }, [currentHotel?.photos]);
+    
+  // 自动播放轮播图
+  useEffect(() => {
+    if (bannerData.length > 1) {
+      autoPlayTimerRef.current = setInterval(() => {
+        setActiveIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % bannerData.length;
+          flatListRef.current?.scrollToIndex({
+            index: nextIndex,
+            animated: true,
+          });
+          return nextIndex;
+        });
+      }, 3000);
+    }
+    
+    return () => {
+      if (autoPlayTimerRef.current) {
+        clearInterval(autoPlayTimerRef.current);
+      }
+    };
+  }, [bannerData.length]);
+  
+  // 使用useCallback优化handleScroll函数，避免每次渲染都创建新函数
+  const handleScroll = useCallback((event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffset / SCREEN_WIDTH);
+    setActiveIndex(prevIndex => {
+      if (index !== prevIndex && index >= 0 && index < bannerData.length) {
+        return index;
+      }
+      return prevIndex;
+    });
+  }, [bannerData.length]);
+  
+  // 使用useCallback缓存renderPagination函数
+  const renderPagination = useCallback(() => {
+    if (bannerData.length <= 1) return null;
+    
+    return (
+      <View style={styles.paginationContainer}>
+        {bannerData.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.paginationDot,
+              index === activeIndex && styles.paginationDotActive,
+            ]}
+          />
+        ))}
+      </View>
+    );
+  }, [bannerData.length, activeIndex]);
+  
+  // 使用useCallback缓存renderItem函数，避免每次渲染都创建新函数
+  const renderBannerItem = useCallback(({ item }: { item: string }) => (
+    <Image
+      source={{ 
+        uri: item,
+        cache: 'force-cache' 
+      }}
+      style={styles.detailBanner}
+      onError={() => console.log('图片加载失败：', item)}
+    />
+  ), []);
 
   return (
     <ScrollView style={styles.pageContainer}>
@@ -68,35 +186,26 @@ const HotelDetailPage = ({
         <View style={styles.emptyView} />
       </View>
 
-      {/* 大图Banner（支持左右滚动） */}
-      <FlatList
-  // 修复点1：过滤+清洗URL（去除空格、过滤空值），同时做安全判断
-  data={
-    currentHotel?.photos // 先判断currentHotel是否存在
-      ? currentHotel.photos
-          .map(url => url.trim()) // 去除URL前后的空格（核心修复！）
-          .filter(url => url) // 过滤清洗后为空的URL
-      : ['https://picsum.photos/id/1031/800/400'] // 兜底图
-  }
-  renderItem={({ item }) => (
-    // 修复点2：给Image加兜底（可选，进一步保证显示）
-    <Image
-      source={{ 
-        uri: item,
-        // 兼容iOS/Android的URI解析（可选）
-        cache: 'force-cache' 
-      }}
-      style={styles.detailBanner}
-      // 图片加载失败时显示兜底图（关键！）
-      onError={() => console.log('图片加载失败：', item)}
-      fallbackSource={{ uri: 'https://picsum.photos/id/1031/800/400' }} // RN 0.73+ 支持
-    />
-  )}
-  keyExtractor={(item, idx) => `img_${idx}_${item}`} // 优化key（避免重复）
-  horizontal
-  showsHorizontalScrollIndicator={true}
-  pagingEnabled
-/>
+      {/* 大图Banner（支持左右滚动、自动播放、分页指示器） */}
+      <View style={styles.bannerContainer}>
+        <FlatList
+          ref={flatListRef}
+          data={bannerData}
+          renderItem={renderBannerItem}
+          keyExtractor={(item, idx) => `img_${idx}_${item}`}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          getItemLayout={(data, index) => ({
+            length: SCREEN_WIDTH,
+            offset: SCREEN_WIDTH * index,
+            index,
+          })}
+        />
+        {renderPagination()}
+      </View>
 
       {/* 酒店基础信息 */}
       <View style={styles.hotelBaseInfo}>
@@ -108,9 +217,15 @@ const HotelDetailPage = ({
         <View style={styles.facilitiesContainer}>
           <Text style={styles.facilityLabel}>酒店设施：</Text>
           <View style={styles.facilitiesList}>
-            <Text style={styles.facilityText}>免费Wi-Fi</Text>
-            <Text style={styles.facilityText}>停车场</Text>
-            <Text style={styles.facilityText}>24小时前台</Text>
+            {currentHotel.amenities && currentHotel.amenities.length > 0 ? (
+              currentHotel.amenities.map((amenity: string, index: number) => (
+                <Text key={index} style={styles.facilityText}>
+                  {amenitiesMap[amenity] || amenity}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.facilityText}>暂无设施信息</Text>
+            )}
           </View>
         </View>
       </View>
@@ -140,13 +255,37 @@ const HotelDetailPage = ({
         {currentHotel.roomTypes
           .sort((a, b) => a.price - b.price) // 按价格从低到高排序
           .map(roomType => (
-            <View key={roomType.id} style={styles.roomTypeItem}>
+            <View key={roomType._id.$oid} style={styles.roomTypeItem}>
               <View style={styles.roomTypeLeftContent}>
-                {roomType.photos && roomType.photos.length > 0 && (
-                  <Image source={{uri: roomType.photos[0]}} style={styles.roomTypeImage} />
+                {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
+                  <Image 
+                    source={{uri: roomType.photos[0].url}} 
+                    style={styles.roomTypeImage}
+                    defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
+                    onError={() => console.log('房型图片加载失败：', roomType.photos[0].url)}
+                  />
+                ) : (
+                  <Image 
+                    source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
+                    style={styles.roomTypeImage}
+                  />
                 )}
                 <View style={styles.roomTypeInfo}>
                   <Text style={styles.roomTypeName}>{roomType.name}</Text>
+                  <View style={styles.roomTypeDetails}>
+                    <Text style={styles.roomTypeDetailText}>
+                      {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住{roomType.capacity}人
+                    </Text>
+                  </View>
+                  {roomType.tags && roomType.tags.length > 0 && (
+                    <View style={styles.roomTypeTags}>
+                      {roomType.tags.map((tag, index) => (
+                        <Text key={index} style={styles.roomTypeTagText}>
+                          {roomTagsMap[tag] || tag}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               </View>
               <View style={styles.roomTypePrice}>
@@ -240,10 +379,35 @@ const styles = StyleSheet.create({
   emptyView: {
     width: 60,
   },
+  bannerContainer: {
+    position: 'relative',
+  },
   detailBanner: {
-    width: '100%',
+    width: SCREEN_WIDTH,
     height: 220,
     resizeMode: 'cover',
+  },
+  paginationContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#fff',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   hotelBaseInfo: {
     padding: 16,
@@ -369,6 +533,28 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     marginBottom: 4,
+  },
+  roomTypeDetails: {
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  roomTypeDetailText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  roomTypeTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  roomTypeTagText: {
+    fontSize: 11,
+    color: '#1890ff',
+    backgroundColor: '#e6f7ff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
   roomTypeBottomRow: {
     flexDirection: 'row',

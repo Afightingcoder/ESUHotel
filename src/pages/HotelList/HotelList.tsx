@@ -19,6 +19,18 @@ import {formatDate} from '../../utils/dateUtils';
 import {BASE_URL} from '../../utils/api';
 import {styles} from './styles';
 
+// 酒店设施映射关系
+const amenitiesMap: Record<string, string> = {
+  WiFi: "WiFi",
+  Parking: "停车场",
+  Breakfast: "早餐",
+  Family: "亲子友好",
+  Gym: "健身房",
+  Pool: "泳池",
+  Pets: "可带宠物",
+  Airport: "机场接送",
+};
+
 const HotelListPage = ({
   navigateTo,
   routeParams
@@ -115,7 +127,7 @@ const HotelListPage = ({
       <TouchableOpacity
         style={styles.hotelItem}
         onPress={handlePress}>
-        <Image source={{uri: item.roomTypes[0].photos[0]}} style={styles.hotelImage} />
+        <Image source={{uri: item.photos[0].url}} style={styles.hotelImage} />
         <View style={styles.hotelInfo}>
           <View style={styles.hotelNameContainer}>
             <Text style={styles.hotelName}>{item.name}</Text>
@@ -123,9 +135,11 @@ const HotelListPage = ({
           </View>
           <Text style={styles.hotelAddress}>{item.address}</Text>
           <View style={styles.hotelTags}>
-            <Text style={styles.hotelTagText}>
-              #{item.nearbyInfo}
-            </Text>
+            {item.amenities && item.amenities.length > 0 && item.amenities.map((amenity: string, index: number) => (
+              <Text key={index} style={styles.hotelTagText}>
+                {amenitiesMap[amenity] || amenity}
+              </Text>
+            ))}
           </View>
           <View style={styles.hotelPriceContainer}>
             <View style={styles.priceWrapper}>

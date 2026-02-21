@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo, memo} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Modal} from 'react-native';
 
 interface CalendarProps {
@@ -26,13 +26,11 @@ const getTomorrowDate = () => {
   )}-${String(tomorrow.getDate()).padStart(2, '0')}`;
 };
 
-const Calendar: React.FC<CalendarProps> = ({
+const Calendar: React.FC<CalendarProps> = memo(({
   onDateSelect,
   initialStartDate,
   initialEndDate,
 }) => {
-  console.log('initialStartDate', initialStartDate);
-  console.log('initialEndDate', initialEndDate);
   const [isVisible, setIsVisible] = useState(false);
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
@@ -72,17 +70,14 @@ const Calendar: React.FC<CalendarProps> = ({
     return new Date(dateString);
   };
 
-  // 计算居住晚数
-  const calculateNights = () => {
+  // 使用useMemo缓存计算居住晚数的结果
+  const nights = useMemo(() => {
     const start = parseDate(startDate || initialStartDate);
     const end = parseDate(endDate || initialEndDate);
-    console.log('开始日期', start);
-    console.log('结束日期', end);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    console.log('居住晚数', diffDays);
     return diffDays;
-  };
+  }, [startDate, endDate, initialStartDate, initialEndDate]);
 
   // 格式化日期为 YYYY-MM-DD
   const formatDate = (year: number, month: number, day: number) => {
@@ -259,7 +254,7 @@ const Calendar: React.FC<CalendarProps> = ({
                 </Text>
               )}
             </View>
-            <Text style={styles.nightsDisplay}>共 {calculateNights()} 晚</Text>
+            <Text style={styles.nightsDisplay}>共 {nights} 晚</Text>
           </View>
         </View>
         <Text style={styles.calendarIcon}>📅</Text>
@@ -317,7 +312,7 @@ const Calendar: React.FC<CalendarProps> = ({
                 </Text>
                 {startDate && endDate && (
                   <Text style={styles.nightsInfo}>
-                    共 {calculateNights()} 晚
+                    共 {nights} 晚
                   </Text>
                 )}
               </View>
@@ -336,7 +331,7 @@ const Calendar: React.FC<CalendarProps> = ({
       </Modal>
     </>
   );
-};
+});
 
 const styles = StyleSheet.create({
   calendarContainer: {
