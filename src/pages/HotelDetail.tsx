@@ -184,7 +184,12 @@ const HotelDetailPage = ({
       <View style={styles.hotelBaseInfo}>
         <View style={styles.baseInfoRow}>
           <Text style={styles.hotelNameLarge}>{currentHotel.name}</Text>
-          <Text style={styles.hotelStarLarge}>{currentHotel.star}星</Text>
+          <View style={styles.hotelInfoRight}>
+            <Text style={styles.hotelStarLarge}>{'🌟'.repeat(currentHotel.star)}</Text>
+            {currentHotel.openingDate && (
+              <Text style={styles.openingDate}>{currentHotel.openingDate.split('-')[0]}年开业</Text>
+            )}
+          </View>
         </View>
         <Text style={styles.hotelAddressLarge}>{currentHotel.address}</Text>
         <View style={styles.facilitiesContainer}>
@@ -396,12 +401,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+  },
+  hotelInfoRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   hotelStarLarge: {
-    fontSize: 14,
-    color: '#ff9500',
-    borderWidth: 1,
-    borderColor: '#ff9500',
+    fontSize: 12,
+  },
+  openingDate: {
+    fontSize: 12,
+    color: '#b8860b',
+    backgroundColor: '#ffd700',
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,

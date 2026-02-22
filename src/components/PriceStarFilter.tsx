@@ -28,7 +28,7 @@ const priceRanges = [
 ];
 
 const starOptions = [
-  {key: 2, label: '2星及以下', desc: '经济'},
+  {key: 2, label: '2星', desc: '经济'},
   {key: 3, label: '3星', desc: '舒适'},
   {key: 4, label: '4星', desc: '高档'},
   {key: 5, label: '5星', desc: '豪华'},
@@ -142,9 +142,10 @@ const PriceStarFilter: React.FC<PriceStarFilterProps> = ({
                           {option.desc}
                         </Text>
                       </View>
-                      {selectedStars.includes(option.key) && (
-                        <Text style={styles.checkMark}>✓</Text>
-                      )}
+                      <Text style={[
+                        styles.checkMark,
+                        !selectedStars.includes(option.key) && styles.checkMarkHidden,
+                      ]}>✓</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -214,12 +215,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 4,
     backgroundColor: '#f5f5f5',
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    position: 'relative',
   },
   tagItemActive: {
     backgroundColor: '#e6f7ff',
-    borderWidth: 1,
     borderColor: '#1890ff',
   },
   tagText: {
@@ -236,11 +239,18 @@ const styles = StyleSheet.create({
   },
   starTagContent: {
     flexDirection: 'column',
+    width: 50,
+    alignItems: 'center',
   },
   checkMark: {
-    fontSize: 14,
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    fontSize: 10,
     color: '#1890ff',
-    marginLeft: 6,
+  },
+  checkMarkHidden: {
+    color: 'transparent',
   },
   footer: {
     flexDirection: 'row',

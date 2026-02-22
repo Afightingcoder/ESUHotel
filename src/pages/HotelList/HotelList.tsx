@@ -9,7 +9,6 @@ import {
   Modal,
 } from 'react-native';
 import type {RouteType, HotelType} from '../../types';
-import {BASE_URL} from '../../utils/api';
 import {mockHotels} from '../../data/mockData';
 // 导入react-native-amap-geolocation库
 // import {init} from 'react-native-amap-geolocation';
@@ -135,7 +134,16 @@ const HotelListPage = ({
   }, [hotels, sortType]);
 
   // 重新搜索酒店列表（价格/星级/筛选时调用）
-  const searchHotels = async () => {
+  const searchHotels = async (params?: {
+    price?: number | null;
+    stars?: number[];
+    filters?: {
+      hotFilters: string[];
+      accommodationTypes: string[];
+      hotelFeatures: string[];
+      roomFeatures: string[];
+    };
+  }) => {
     try {
       const searchParams: any = {
         location,
@@ -147,7 +155,8 @@ const HotelListPage = ({
       };
 
       // 处理价格区间
-      if (selectedPrice !== null) {
+      const priceToUse = params?.price !== undefined ? params.price : selectedPrice;
+      if (priceToUse !== null) {
         const priceRanges: Record<number, {min?: number; max?: number}> = {
           200: {max: 200},
           350: {min: 200, max: 350},
@@ -158,7 +167,7 @@ const HotelListPage = ({
           1401: {min: 1400},
         };
         
-        const priceRange = priceRanges[selectedPrice];
+        const priceRange = priceRanges[priceToUse];
         if (priceRange) {
           if (priceRange.min) searchParams.minPrice = priceRange.min;
           if (priceRange.max) searchParams.maxPrice = priceRange.max;
@@ -166,8 +175,30 @@ const HotelListPage = ({
       }
 
       // 处理星级
-      if (selectedStars.length > 0) {
-        searchParams.stars = selectedStars;
+      const starsToUse = params?.stars || selectedStars;
+      if (starsToUse.length > 0) {
+        searchParams.stars = starsToUse;
+      }
+
+      // 处理筛选选项，添加到keyword中
+      const filtersToUse = params?.filters || advancedFilters;
+      const filterKeywords: string[] = [];
+      
+      if (filtersToUse.hotFilters.length > 0) {
+        filterKeywords.push(...filtersToUse.hotFilters);
+      }
+      if (filtersToUse.accommodationTypes.length > 0) {
+        filterKeywords.push(...filtersToUse.accommodationTypes);
+      }
+      if (filtersToUse.hotelFeatures.length > 0) {
+        filterKeywords.push(...filtersToUse.hotelFeatures);
+      }
+      if (filtersToUse.roomFeatures.length > 0) {
+        filterKeywords.push(...filtersToUse.roomFeatures);
+      }
+      
+      if (filterKeywords.length > 0) {
+        searchParams.keyword = searchKeyword ? `${searchKeyword} ${filterKeywords.join(' ')}` : filterKeywords.join(' ');
       }
 
       console.log('搜索参数:', searchParams);
@@ -175,8 +206,8 @@ const HotelListPage = ({
       const hotelList = await getHotelList(searchParams);
       console.log('获取酒店列表成功:', hotelList);
       
-      if (hotelList && hotelList.data) {
-        setHotels(hotelList.data);
+      if (hotelList) {
+        setHotels(hotelList);
       }
     } catch (error) {
       console.error('获取酒店列表失败:', error);
@@ -207,7 +238,7 @@ const HotelListPage = ({
         <View style={styles.hotelInfo}>
           <View style={styles.hotelNameContainer}>
             <Text style={styles.hotelName}>{item.name}</Text>
-            <Text style={styles.hotelStar}>{item.star}星</Text>
+            <Text style={styles.hotelStar}>{'🌟'.repeat(item.star)}</Text>
           </View>
           <Text style={styles.hotelAddress}>{item.address}</Text>
           <View style={styles.hotelTags}>
@@ -434,9 +465,8 @@ const HotelListPage = ({
               <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={() => {
-                  // 关闭弹窗
                   setIsModalVisible(false);
-                  // 这里可以添加数据更新的逻辑，例如重新加载酒店列表等
+                  searchHotels();
                 }}>
                 <Text style={styles.confirmButtonText}>确认</Text>
               </TouchableOpacity>
@@ -626,14 +656,13 @@ const HotelListPage = ({
         onFilterChange={(price, stars) => {
           setSelectedPrice(price);
           setSelectedStars(stars);
-          searchHotels();
+          searchHotels({ price, stars });
         }}
         currentPrice={selectedPrice}
         currentStars={selectedStars}
         onRealTimeChange={(price, stars) => {
           setSelectedPrice(price);
           setSelectedStars(stars);
-          searchHotels();
         }}
       />
 
@@ -643,12 +672,11 @@ const HotelListPage = ({
         onClose={() => setIsAdvancedFilterVisible(false)}
         onFilterChange={(filters) => {
           setAdvancedFilters(filters);
-          searchHotels();
+          searchHotels({ filters });
         }}
         currentFilters={advancedFilters}
         onRealTimeChange={(filters) => {
           setAdvancedFilters(filters);
-          searchHotels();
         }}
       />
     </View>

@@ -35,7 +35,7 @@ const filterOptions = {
   hotFilters: [
     {key: 'breakfast', label: '含早餐'},
     {key: 'cancel', label: '免费取消'},
-    {key: 'wifi', label: '免费WiFi'},
+    {key: 'double', label: '双床房'},
     {key: 'parking', label: '免费停车'},
   ],
   accommodationTypes: [
@@ -47,18 +47,14 @@ const filterOptions = {
   hotelFeatures: [
     {key: 'pool', label: '泳池'},
     {key: 'gym', label: '健身房'},
-    {key: 'spa', label: 'SPA'},
+    {key: 'spa', label: '水疗'},
     {key: 'restaurant', label: '餐厅'},
     {key: 'bar', label: '酒吧'},
-    {key: 'meeting', label: '会议室'},
   ],
   roomFeatures: [
-    {key: 'window', label: '有窗户'},
-    {key: 'bathtub', label: '浴缸'},
-    {key: 'balcony', label: '阳台'},
-    {key: 'kitchen', label: '厨房'},
-    {key: 'washer', label: '洗衣机'},
-    {key: 'aircon', label: '空调'},
+    {key: 'family_theme', label: '亲子主题房'},
+    {key: 'loft', label: '复式LOFT房'},
+    {key: 'movie', label: '影音房'},
   ],
 };
 
@@ -143,9 +139,10 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
               ]}>
               {option.label}
             </Text>
-            {selectedList.includes(option.key) && (
-              <Text style={styles.checkMark}>✓</Text>
-            )}
+            <Text style={[
+              styles.checkMark,
+              !selectedList.includes(option.key) && styles.checkMarkHidden,
+            ]}>✓</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -239,12 +236,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 4,
     backgroundColor: '#f5f5f5',
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    position: 'relative',
   },
   tagItemActive: {
     backgroundColor: '#e6f7ff',
-    borderWidth: 1,
     borderColor: '#1890ff',
   },
   tagText: {
@@ -255,9 +254,14 @@ const styles = StyleSheet.create({
     color: '#1890ff',
   },
   checkMark: {
-    fontSize: 14,
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    fontSize: 10,
     color: '#1890ff',
-    marginLeft: 6,
+  },
+  checkMarkHidden: {
+    color: 'transparent',
   },
   footer: {
     flexDirection: 'row',
