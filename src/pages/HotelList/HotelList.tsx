@@ -21,7 +21,7 @@ import AdvancedFilter from '../../components/AdvancedFilter';
 import {formatDate} from '../../utils/dateUtils';
 import {styles} from './styles';
 import {getHotelDetail, getHotelList} from '../../utils/api';
-import {amenitiesMap} from '../../utils/mappings';
+import {amenitiesMap, removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
 
 const HotelListPage = ({
   navigateTo,
@@ -65,7 +65,7 @@ const HotelListPage = ({
     console.log('酒店列表数据:', hotels);
   }, [hotels]);
   // 搜索框输入内容
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [searchKeyword, setSearchKeyword] = useState<string>(routeParams?.keyword || '');
 
   // 筛选弹窗状态
   const [isSortFilterVisible, setIsSortFilterVisible] = useState<boolean>(false);
@@ -74,18 +74,17 @@ const HotelListPage = ({
   
   // 筛选条件状态
   const [sortType, setSortType] = useState<string>('default');
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
-  const [selectedStars, setSelectedStars] = useState<number[]>([]);
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
+  const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
+  
   const [advancedFilters, setAdvancedFilters] = useState<{
     hotFilters: string[];
     accommodationTypes: string[];
     hotelFeatures: string[];
     roomFeatures: string[];
-  }>({
-    hotFilters: [],
-    accommodationTypes: [],
-    hotelFeatures: [],
-    roomFeatures: [],
+  }>(() => {
+    const keyword = routeParams?.keyword || '';
+    return parseKeywordFilters(keyword);
   });
 
   // 弹窗状态
@@ -411,11 +410,20 @@ const HotelListPage = ({
         keyExtractor={item => item.id}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={() => (
-          <View style={styles.loadMoreFooter}>
-            <Text style={styles.loadMoreText}>加载中...</Text>
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={styles.emptyText}>暂无符合条件的酒店，修改条件可重新查询</Text>
           </View>
         )}
+        ListFooterComponent={() => {
+          if (sortedHotels.length === 0) return null;
+          return (
+            <View style={styles.loadMoreFooter}>
+              <Text style={styles.loadMoreText}>———我也是有底线的哦———</Text>
+            </View>
+          );
+        }}
       />
 
       {/* 顶部固定的蒙层弹窗 */}
@@ -687,6 +695,10 @@ const HotelListPage = ({
         currentFilters={advancedFilters}
         onRealTimeChange={(filters) => {
           setAdvancedFilters(filters);
+        }}
+        onClear={() => {
+          const cleanedKeyword = removeFilterKeywords(searchKeyword);
+          setSearchKeyword(cleanedKeyword);
         }}
       />
     </View>

@@ -219,6 +219,27 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  // 空状态样式
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#999',
+  },
   // 弹窗样式
   modalOverlay: {
     flex: 1,

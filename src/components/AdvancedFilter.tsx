@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import {filterOptions} from '../utils/mappings';
 
 interface AdvancedFilterProps {
   visible: boolean;
@@ -29,34 +30,8 @@ interface AdvancedFilterProps {
     hotelFeatures: string[];
     roomFeatures: string[];
   }) => void;
+  onClear?: () => void;
 }
-
-const filterOptions = {
-  hotFilters: [
-    {key: 'breakfast', label: '含早餐'},
-    {key: 'cancel', label: '免费取消'},
-    {key: 'double', label: '双床房'},
-    {key: 'parking', label: '免费停车'},
-  ],
-  accommodationTypes: [
-    {key: 'hotel', label: '酒店'},
-    {key: 'apartment', label: '公寓'},
-    {key: 'homestay', label: '民宿'},
-    {key: 'hostel', label: '青旅'},
-  ],
-  hotelFeatures: [
-    {key: 'pool', label: '泳池'},
-    {key: 'gym', label: '健身房'},
-    {key: 'spa', label: '水疗'},
-    {key: 'restaurant', label: '餐厅'},
-    {key: 'bar', label: '酒吧'},
-  ],
-  roomFeatures: [
-    {key: 'family_theme', label: '亲子主题房'},
-    {key: 'loft', label: '复式LOFT房'},
-    {key: 'movie', label: '影音房'},
-  ],
-};
 
 const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
   visible,
@@ -64,6 +39,7 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
   onFilterChange,
   currentFilters,
   onRealTimeChange,
+  onClear,
 }) => {
   const [hotFilters, setHotFilters] = useState<string[]>(currentFilters.hotFilters);
   const [accommodationTypes, setAccommodationTypes] = useState<string[]>(currentFilters.accommodationTypes);
@@ -112,6 +88,9 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
         hotelFeatures: [],
         roomFeatures: [],
       });
+    }
+    if (onClear) {
+      onClear();
     }
   };
 
