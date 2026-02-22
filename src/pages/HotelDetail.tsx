@@ -12,36 +12,9 @@ import {
 } from 'react-native';
 import Calendar from '../components/Calendar';
 import GuestSelector from '../components/GuestSelector';
+import {amenitiesMap, roomTagsMap, bedTypeMap} from '../utils/mappings';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
-
-// 酒店设施映射关系
-const amenitiesMap: Record<string, string> = {
-  WiFi: "WiFi",
-  Parking: "停车场",
-  Breakfast: "早餐",
-  Family: "亲子友好",
-  Gym: "健身房",
-  Pool: "泳池",
-  Pets: "可带宠物",
-  Airport: "机场接送",
-};
-
-// 房型设施标签映射关系
-const roomTagsMap: Record<string, string> = {
-  breakfast: "含早餐",
-  cancel: "免费取消",
-  window: "有窗",
-  bathroom: "独立卫浴",
-  wifi: "免费WiFi",
-};
-
-// 床型映射关系
-const bedTypeMap: Record<string, string> = {
-  big: "1.8m 大床",
-  double: "1.2m 双床",
-  king: "2.0m 超大床",
-};
 
 const HotelDetailPage = ({
   navigateBack,

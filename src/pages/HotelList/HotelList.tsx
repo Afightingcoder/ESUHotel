@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {
   View,
   Text,
@@ -15,21 +15,13 @@ import {mockHotels} from '../../data/mockData';
 import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestSelector from '../../components/GuestSelector';
+import SortFilter from '../../components/SortFilter';
+import PriceStarFilter from '../../components/PriceStarFilter';
+import AdvancedFilter from '../../components/AdvancedFilter';
 import {formatDate} from '../../utils/dateUtils';
-import {BASE_URL} from '../../utils/api';
 import {styles} from './styles';
-
-// 酒店设施映射关系
-const amenitiesMap: Record<string, string> = {
-  WiFi: "WiFi",
-  Parking: "停车场",
-  Breakfast: "早餐",
-  Family: "亲子友好",
-  Gym: "健身房",
-  Pool: "泳池",
-  Pets: "可带宠物",
-  Airport: "机场接送",
-};
+import {getHotelDetail} from '../../utils/api';
+import {amenitiesMap} from '../../utils/mappings';
 
 const HotelListPage = ({
   navigateTo,
@@ -75,6 +67,27 @@ const HotelListPage = ({
   // 搜索框输入内容
   const [searchKeyword, setSearchKeyword] = useState<string>('');
 
+  // 筛选弹窗状态
+  const [isSortFilterVisible, setIsSortFilterVisible] = useState<boolean>(false);
+  const [isPriceStarFilterVisible, setIsPriceStarFilterVisible] = useState<boolean>(false);
+  const [isAdvancedFilterVisible, setIsAdvancedFilterVisible] = useState<boolean>(false);
+  
+  // 筛选条件状态
+  const [sortType, setSortType] = useState<string>('default');
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [selectedStars, setSelectedStars] = useState<number[]>([]);
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    hotFilters: string[];
+    accommodationTypes: string[];
+    hotelFeatures: string[];
+    roomFeatures: string[];
+  }>({
+    hotFilters: [],
+    accommodationTypes: [],
+    hotelFeatures: [],
+    roomFeatures: [],
+  });
+
   // 弹窗状态
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   // 客房和人数选择弹窗状态
@@ -104,7 +117,7 @@ const HotelListPage = ({
     const handlePress = async () => {
       try {
         // 请求酒店详情API
-        const response = await fetch(`${BASE_URL}/hotels/detail/${item.id}`); 
+        const response = await getHotelDetail(`${item.id}`);; 
 
         if (response.ok) {
           const hotelDetail = await response.json();
@@ -204,13 +217,92 @@ const HotelListPage = ({
           </View>
         </View>
       </View>
+      <View style={styles.filterBar}>
         <TouchableOpacity
-          style={styles.filterBtn}>
-          <Text style={styles.filterBtnText}>筛选 ▼</Text>
+          style={styles.filterBtn}
+          onPress={() => setIsSortFilterVisible(true)}>
+          <Text style={[
+            styles.filterBtnText,
+            styles.filterBtnTextActive
+          ]}>
+            {sortType === 'default' ? '默认排序' : 
+             sortType === 'price_low' ? '低价优先' :
+             sortType === 'price_high' ? '高价优先' : '高星优先'}
+          </Text>
+          <Text style={[
+            styles.filterArrow,
+            isSortFilterVisible && styles.filterArrowUp,
+            styles.filterArrowActive
+          ]}>
+            {isSortFilterVisible ? '▲' : '▼'}
+          </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setIsPriceStarFilterVisible(true)}>
+          <Text style={[
+            styles.filterBtnText,
+            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterBtnTextActive
+          ]}>
+            价格/星级
+          </Text>
+          {(selectedPrice !== null || selectedStars.length > 0) && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>
+                {(selectedPrice !== null ? 1 : 0) + selectedStars.length}
+              </Text>
+            </View>
+          )}
+          <Text style={[
+            styles.filterArrow,
+            isPriceStarFilterVisible && styles.filterArrowUp,
+            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterArrowActive
+          ]}>
+            {isPriceStarFilterVisible ? '▲' : '▼'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setIsAdvancedFilterVisible(true)}>
+          <Text style={[
+            styles.filterBtnText,
+            (isAdvancedFilterVisible || 
+             advancedFilters.hotFilters.length > 0 ||
+             advancedFilters.accommodationTypes.length > 0 ||
+             advancedFilters.hotelFeatures.length > 0 ||
+             advancedFilters.roomFeatures.length > 0) && styles.filterBtnTextActive
+          ]}>
+            筛选
+          </Text>
+          {(advancedFilters.hotFilters.length > 0 ||
+            advancedFilters.accommodationTypes.length > 0 ||
+            advancedFilters.hotelFeatures.length > 0 ||
+            advancedFilters.roomFeatures.length > 0) && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>
+                {advancedFilters.hotFilters.length +
+                 advancedFilters.accommodationTypes.length +
+                 advancedFilters.hotelFeatures.length +
+                 advancedFilters.roomFeatures.length}
+              </Text>
+            </View>
+          )}
+          <Text style={[
+            styles.filterArrow,
+            isAdvancedFilterVisible && styles.filterArrowUp,
+            (isAdvancedFilterVisible || 
+             advancedFilters.hotFilters.length > 0 ||
+             advancedFilters.accommodationTypes.length > 0 ||
+             advancedFilters.hotelFeatures.length > 0 ||
+             advancedFilters.roomFeatures.length > 0) && styles.filterArrowActive
+          ]}>
+            {isAdvancedFilterVisible ? '▲' : '▼'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       {/* 酒店列表（支持上滑加载） */}
       <FlatList
-        data={hotels}
+        data={filteredHotels}
         renderItem={renderHotelItem}
         keyExtractor={item => item.id}
         onEndReached={handleLoadMore}
@@ -455,6 +547,39 @@ const HotelListPage = ({
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* 排序筛选弹窗 */}
+      <SortFilter
+        visible={isSortFilterVisible}
+        onClose={() => setIsSortFilterVisible(false)}
+        onSortChange={setSortType}
+        currentSort={sortType}
+      />
+
+      {/* 价格/星级筛选弹窗 */}
+      <PriceStarFilter
+        visible={isPriceStarFilterVisible}
+        onClose={() => setIsPriceStarFilterVisible(false)}
+        onFilterChange={(price, stars) => {
+          setSelectedPrice(price);
+          setSelectedStars(stars);
+        }}
+        currentPrice={selectedPrice}
+        currentStars={selectedStars}
+        onRealTimeChange={(price, stars) => {
+          setSelectedPrice(price);
+          setSelectedStars(stars);
+        }}
+      />
+
+      {/* 综合筛选弹窗 */}
+      <AdvancedFilter
+        visible={isAdvancedFilterVisible}
+        onClose={() => setIsAdvancedFilterVisible(false)}
+        onFilterChange={setAdvancedFilters}
+        currentFilters={advancedFilters}
+        onRealTimeChange={setAdvancedFilters}
+      />
     </View>
   );
 };

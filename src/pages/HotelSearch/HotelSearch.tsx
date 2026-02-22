@@ -16,7 +16,8 @@ import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestSelector from '../../components/GuestSelector';
 import {formatDate} from '../../utils/dateUtils';
-import {getHotelList} from '../../utils/api';
+import {getHotelList, getHotelDetail} from '../../utils/api';
+import {amenitiesMap} from '../../utils/mappings';
 import {styles} from './styles';
 // 导入react-native-amap-geolocation库
 import {init} from 'react-native-amap-geolocation';
@@ -28,6 +29,9 @@ const HotelSearchPage = ({
 }) => {
   const [location, setLocation] = useState<string>('上海');
   const [keyword, setKeyword] = useState<string>('');
+  
+  // Banner酒店数据
+  const [bannerHotel, setBannerHotel] = useState<any>(null);
 
   // 计算今天和明天的日期
   const getTodayDate = () => {
@@ -106,6 +110,22 @@ const HotelSearchPage = ({
     return () => {};
   }, []);
 
+  // 获取banner酒店数据
+  useEffect(() => {
+    const fetchBannerHotel = async () => {
+      try {
+        const response = await getHotelDetail('699991a1170b3e7f4f8f0c8a');
+        if (response && response.data) {
+          setBannerHotel(response.data);
+        }
+      } catch (error) {
+        console.error('获取banner酒店数据失败:', error);
+      }
+    };
+    
+    fetchBannerHotel();
+  }, []);
+
   // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {
     setStartDate(start);
@@ -178,20 +198,30 @@ const HotelSearchPage = ({
   return (
     <ScrollView style={styles.pageContainer}>
       {/* 顶部Banner */}
-      <TouchableOpacity
-        style={styles.bannerContainer}
-        onPress={() => navigateTo('detail', {hotelId: 'hotel_001'})}>
-        <ImageBackground
-          source={{uri: 'https://ts1.tc.mm.bing.net/th/id/OIP-C.b3C-zpD6bQAuMtZxbYsTSgHaFj?rs=1&pid=ImgDetMain&o=7&rm=3'}}
-          style={styles.bannerImage}>
-          <View style={styles.bannerOverlay}>
-            <Text style={styles.bannerTitle}>上海陆家嘴玥酒店</Text>
-            <Text style={styles.bannerSubtitle}>
-              豪华体验 · 近东方明珠 · 限时8折
-            </Text>
-          </View>
-        </ImageBackground>
-      </TouchableOpacity>
+      {bannerHotel && (
+        <TouchableOpacity
+          style={styles.bannerContainer}
+          onPress={() => navigateTo('detail', {
+            hotelId: bannerHotel.id,
+            hotelDetail: bannerHotel,
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            rooms,
+            adults,
+            children,
+          })}>
+          <ImageBackground
+            source={{uri: bannerHotel.photos?.[0]?.url || 'https://picsum.photos/id/1031/800/400'}}
+            style={styles.bannerImage}>
+            <View style={styles.bannerOverlay}>
+              <Text style={styles.bannerTitle}>{bannerHotel.name}</Text>
+              <Text style={styles.bannerSubtitle}>
+                {bannerHotel.amenities?.slice(0, 3).map((amenity: string) => amenitiesMap[amenity] || amenity).join(' · ') || '豪华体验 · 优质服务'}
+              </Text>
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
+      )}
 
       {/* 核心查询区域 */}
       <View style={styles.searchContainer}>

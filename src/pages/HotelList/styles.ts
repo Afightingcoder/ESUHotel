@@ -35,17 +35,55 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     width: '20%',
   },
+  filterBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
   filterBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 4,
-    alignSelf: 'flex-end', 
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   filterBtnText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#333',
+    fontWeight: '600',
+  },
+  filterBtnTextActive: {
+    color: '#1890ff',
+  },
+  filterArrow: {
+    fontSize: 10,
+    color: '#333',
+    marginLeft: 4,
+  },
+  filterArrowActive: {
+    color: '#1890ff',
+  },
+  filterArrowUp: {
+    // 向上的箭头通过文本内容切换实现
+  },
+  filterBadge: {
+    backgroundColor: '#1890ff',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+    paddingHorizontal: 5,
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
   headerInfoItem: {
     paddingHorizontal: 8,

@@ -74,6 +74,15 @@ export const getHotelList = async (params?: HotelSearchParams): Promise<any> => 
 };
 
 /**
+ * 获取单个酒店详情
+ * @param hotelId 酒店ID
+ * @returns Promise<any> 酒店详情数据
+ */
+export const getHotelDetail = async (hotelId: string): Promise<any> => {
+  return fetchApi(`/hotels/detail/${hotelId}`);
+};
+
+/**
  * 发送数据到指定接口
  * @param url 请求路径
  * @param data 发送的数据
