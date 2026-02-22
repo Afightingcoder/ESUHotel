@@ -136,12 +136,20 @@ const Calendar: React.FC<CalendarProps> = memo(({
   // 生成日期显示
   const renderDays = () => {
     const days = generateDays();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     return days.map(day => {
       const dateString = formatDate(currentYear, currentMonth, day);
       const isStartDate = dateString === startDate;
       const isEndDate = dateString === endDate;
       const isInRange =
         startDate && endDate && dateString > startDate && dateString < endDate;
+      
+      // 判断是否是今天以前的日期
+      const currentDate = new Date(currentYear, currentMonth - 1, day);
+      currentDate.setHours(0, 0, 0, 0);
+      const isPastDate = currentDate < today;
 
       return (
         <TouchableOpacity
@@ -151,12 +159,16 @@ const Calendar: React.FC<CalendarProps> = memo(({
             isStartDate && styles.startDate,
             isEndDate && styles.endDate,
             isInRange && styles.rangeDate,
+            isPastDate && styles.disabledDay,
           ]}
-          onPress={() => handleDateSelect(day)}>
+          onPress={() => !isPastDate && handleDateSelect(day)}
+          disabled={isPastDate}
+          activeOpacity={isPastDate ? 1 : 0.2}>
           <Text
             style={[
               styles.dayText,
               (isStartDate || isEndDate) && styles.selectedDayText,
+              isPastDate && styles.disabledDayText,
             ]}>
             {day}
           </Text>
@@ -479,6 +491,12 @@ const styles = StyleSheet.create({
   selectedDayText: {
     color: '#fff',
     fontWeight: '500',
+  },
+  disabledDay: {
+    backgroundColor: 'transparent',
+  },
+  disabledDayText: {
+    color: '#ccc',
   },
   // 底部信息和按钮
   footer: {
