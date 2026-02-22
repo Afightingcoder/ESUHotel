@@ -9,6 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import type {RouteType, HotelType} from '../../types';
+import {BASE_URL} from '../../utils/api';
 import {mockHotels} from '../../data/mockData';
 // 导入react-native-amap-geolocation库
 // import {init} from 'react-native-amap-geolocation';
@@ -20,7 +21,7 @@ import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
 import {formatDate} from '../../utils/dateUtils';
 import {styles} from './styles';
-import {getHotelDetail} from '../../utils/api';
+import {getHotelDetail, getHotelList} from '../../utils/api';
 import {amenitiesMap} from '../../utils/mappings';
 
 const HotelListPage = ({
@@ -112,23 +113,85 @@ const HotelListPage = ({
     }, 1000);
   };
 
+  // 前端排序后的酒店列表
+  const sortedHotels = useMemo(() => {
+    let result = [...hotels];
+    
+    switch (sortType) {
+      case 'price_low':
+        result.sort((a, b) => (a.roomTypes?.[0]?.price || 0) - (b.roomTypes?.[0]?.price || 0));
+        break;
+      case 'price_high':
+        result.sort((a, b) => (b.roomTypes?.[0]?.price || 0) - (a.roomTypes?.[0]?.price || 0));
+        break;
+      case 'star_high':
+        result.sort((a, b) => b.star - a.star);
+        break;
+      default:
+        break;
+    }
+    
+    return result;
+  }, [hotels, sortType]);
+
+  // 重新搜索酒店列表（价格/星级/筛选时调用）
+  const searchHotels = async () => {
+    try {
+      const searchParams: any = {
+        location,
+        keyword: searchKeyword,
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        rooms,
+        guests: adults + children,
+      };
+
+      // 处理价格区间
+      if (selectedPrice !== null) {
+        const priceRanges: Record<number, {min?: number; max?: number}> = {
+          200: {max: 200},
+          350: {min: 200, max: 350},
+          400: {min: 350, max: 400},
+          500: {min: 400, max: 500},
+          900: {min: 500, max: 900},
+          1400: {min: 900, max: 1400},
+          1401: {min: 1400},
+        };
+        
+        const priceRange = priceRanges[selectedPrice];
+        if (priceRange) {
+          if (priceRange.min) searchParams.minPrice = priceRange.min;
+          if (priceRange.max) searchParams.maxPrice = priceRange.max;
+        }
+      }
+
+      // 处理星级
+      if (selectedStars.length > 0) {
+        searchParams.stars = selectedStars;
+      }
+
+      console.log('搜索参数:', searchParams);
+      
+      const hotelList = await getHotelList(searchParams);
+      console.log('获取酒店列表成功:', hotelList);
+      
+      if (hotelList && hotelList.data) {
+        setHotels(hotelList.data);
+      }
+    } catch (error) {
+      console.error('获取酒店列表失败:', error);
+    }
+  };
+
   // 渲染酒店列表项
   const renderHotelItem = ({item}: {item: HotelType}) => {
     const handlePress = async () => {
       try {
         // 请求酒店详情API
-        const response = await getHotelDetail(`${item.id}`);; 
-
-        if (response.ok) {
-          const hotelDetail = await response.json();
-          console.log('===详情', hotelDetail.data.roomTypes);
-          // 导航到详情页并传递酒店详情数据，同时保留hotels数据
-          navigateTo('detail', {hotelId: item.id, hotelDetail: hotelDetail.data, startDate, endDate, rooms, adults, children, hotels, location});
-        } else {
-          // API请求失败，使用现有的item数据作为后备
-        console.log('API请求失败，使用现有数据');
-        navigateTo('detail', {hotelId: item.id, startDate, endDate, rooms, adults, children, hotels});
-        }
+        const hotelDetail = await getHotelDetail(`${item.id}`);
+        console.log('===详情', hotelDetail.data.roomTypes);
+        // 导航到详情页并传递酒店详情数据，同时保留hotels数据
+        navigateTo('detail', {hotelId: item.id, hotelDetail: hotelDetail.data, startDate, endDate, rooms, adults, children, hotels, location});
       } catch (error) {
         // 网络错误，使用现有的item数据作为后备
         console.error('网络请求错误:', error);
@@ -302,7 +365,7 @@ const HotelListPage = ({
       </View>
       {/* 酒店列表（支持上滑加载） */}
       <FlatList
-        data={filteredHotels}
+        data={sortedHotels}
         renderItem={renderHotelItem}
         keyExtractor={item => item.id}
         onEndReached={handleLoadMore}
@@ -563,12 +626,14 @@ const HotelListPage = ({
         onFilterChange={(price, stars) => {
           setSelectedPrice(price);
           setSelectedStars(stars);
+          searchHotels();
         }}
         currentPrice={selectedPrice}
         currentStars={selectedStars}
         onRealTimeChange={(price, stars) => {
           setSelectedPrice(price);
           setSelectedStars(stars);
+          searchHotels();
         }}
       />
 
@@ -576,9 +641,15 @@ const HotelListPage = ({
       <AdvancedFilter
         visible={isAdvancedFilterVisible}
         onClose={() => setIsAdvancedFilterVisible(false)}
-        onFilterChange={setAdvancedFilters}
+        onFilterChange={(filters) => {
+          setAdvancedFilters(filters);
+          searchHotels();
+        }}
         currentFilters={advancedFilters}
-        onRealTimeChange={setAdvancedFilters}
+        onRealTimeChange={(filters) => {
+          setAdvancedFilters(filters);
+          searchHotels();
+        }}
       />
     </View>
   );
