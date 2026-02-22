@@ -3,6 +3,19 @@
 // 基地址
 export const BASE_URL = 'http://192.168.10.109:3000/api'; // 需要替换为本机ipv4地址, localhost移动端无法访问
 
+// 酒店搜索参数类型
+export interface HotelSearchParams {
+  location?: string;        // 位置
+  keyword?: string;         // 酒店/品牌关键词
+  startDate?: string;       // 入住日期
+  endDate?: string;         // 离店日期
+  rooms?: number;           // 房间数
+  guests?: number;          // 总人数（成人+儿童）
+  minPrice?: number;        // 最低价格
+  maxPrice?: number;        // 最高价格
+  stars?: number[];         // 星级数组
+}
+
 /**
  * 通用fetch请求函数
  * @param url 请求路径
@@ -32,11 +45,32 @@ async function fetchApi(url: string, options: RequestInit = {}): Promise<any> {
 }
 
 /**
- * 获取酒店列表
+ * 获取酒店列表（支持搜索参数）
+ * @param params 搜索参数
  * @returns Promise<any> 酒店列表数据
  */
-export const getHotelList = async (): Promise<any> => {
-  return fetchApi('/admin/hotels/published');
+export const getHotelList = async (params?: HotelSearchParams): Promise<any> => {
+  // 构建查询字符串
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    if (params.location) queryParams.append('location', params.location);
+    if (params.keyword) queryParams.append('keyword', params.keyword);
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    if (params.rooms) queryParams.append('rooms', params.rooms.toString());
+    if (params.guests) queryParams.append('guests', params.guests.toString());
+    if (params.minPrice) queryParams.append('minPrice', params.minPrice.toString());
+    if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice.toString());
+    if (params.stars && params.stars.length > 0) {
+      queryParams.append('stars', params.stars.join(','));
+    }
+  }
+  
+  const queryString = queryParams.toString();
+  const url = queryString ? `/admin/hotels/published?${queryString}` : '/admin/hotels/published';
+  
+  return fetchApi(url);
 };
 
 /**

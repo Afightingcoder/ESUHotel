@@ -115,22 +115,59 @@ const HotelSearchPage = ({
   // 提交查询
   const handleSearch = async () => {
     try {
-      // 调用API获取酒店列表
-      const hotelList = await getHotelList();
-      console.log('获取酒店列表成功:', hotelList);
+      // 构建搜索参数
+      const searchParams: any = {
+        location,
+        keyword,
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        rooms,
+        guests: adults + children, // 将成人和儿童数量合并为guests
+      };
       
-      // 格式化日期
-      const formattedStart = formatDate(startDate);
-      const formattedEnd = formatDate(endDate);
+      // 处理价格区间
+      if (selectedPrice !== null) {
+        const priceRanges: Record<number, {min?: number; max?: number}> = {
+          200: {max: 200},
+          350: {min: 200, max: 350},
+          400: {min: 350, max: 400},
+          500: {min: 400, max: 500},
+          900: {min: 500, max: 900},
+          1400: {min: 900, max: 1400},
+          1401: {min: 1400},
+        };
+        
+        const priceRange = priceRanges[selectedPrice];
+        if (priceRange) {
+          if (priceRange.min) searchParams.minPrice = priceRange.min;
+          if (priceRange.max) searchParams.maxPrice = priceRange.max;
+        }
+      }
+      
+      // 处理星级
+      if (selectedStars.length > 0) {
+        searchParams.stars = selectedStars;
+      }
+      
+      console.log('搜索参数:', searchParams);
+      
+      // 调用API获取酒店列表
+      const hotelList = await getHotelList(searchParams);
+      console.log('获取酒店列表成功:', hotelList);
       
       // 导航到列表页
       navigateTo('list', {
         location,
         keyword,
         filters,
-        startDate: formattedStart,
-        endDate: formattedEnd,
+        startDate: searchParams.startDate,
+        endDate: searchParams.endDate,
+        rooms,
+        adults,
+        children,
         hotels: hotelList, // 传递获取到的酒店列表
+        selectedPrice,
+        selectedStars,
       });
     } catch (error) {
       console.error('获取酒店列表失败:', error);
