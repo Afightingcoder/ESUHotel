@@ -24,11 +24,13 @@ import {init} from 'react-native-amap-geolocation';
 
 const HotelSearchPage = ({
   navigateTo,
+  routeParams,
 }: {
   navigateTo: (route: RouteType, params?: any) => void;
+  routeParams?: any;
 }) => {
-  const [location, setLocation] = useState<string>('上海');
-  const [keyword, setKeyword] = useState<string>('');
+  const [location, setLocation] = useState<string>(routeParams?.location || '上海');
+  const [keyword, setKeyword] = useState<string>(routeParams?.keyword || '');
   
   // Banner酒店数据
   const [bannerHotel, setBannerHotel] = useState<any>(null);
@@ -50,8 +52,8 @@ const HotelSearchPage = ({
     ).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
   };
 
-  const [startDate, setStartDate] = useState<string>(getTodayDate());
-  const [endDate, setEndDate] = useState<string>(getTomorrowDate());
+  const [startDate, setStartDate] = useState<string>(routeParams?.startDate || getTodayDate());
+  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || getTomorrowDate());
   const [filters, setFilters] = useState<{
     star: number[];
     priceRange: number[];
@@ -62,9 +64,9 @@ const HotelSearchPage = ({
   // 加载弹窗状态
   const [loading] = useState<boolean>(false);
   // 客房和人数状态
-  const [rooms, setRooms] = useState<number>(1);
-  const [adults, setAdults] = useState<number>(1);
-  const [children, setChildren] = useState<number>(0);
+  const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
+  const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
+  const [children, setChildren] = useState<number>(routeParams?.children || 0);
   // 选择弹窗状态
   const [isGuestModalVisible, setIsGuestModalVisible] =
     useState<boolean>(false);
@@ -82,9 +84,9 @@ const HotelSearchPage = ({
   const [isFilterModalVisible, setIsFilterModalVisible] =
     useState<boolean>(false);
   // 价格区间选择状态（单选）
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
   // 星级选择状态（多选）
-  const [selectedStars, setSelectedStars] = useState<number[]>([]);
+  const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
 
   // 快捷标签数据
   const quickTags = [
@@ -125,6 +127,21 @@ const HotelSearchPage = ({
     
     fetchBannerHotel();
   }, []);
+
+  // 监听routeParams变化，更新所有状态
+  useEffect(() => {
+    if (routeParams) {
+      if (routeParams.location) setLocation(routeParams.location);
+      if (routeParams.keyword) setKeyword(routeParams.keyword);
+      if (routeParams.startDate) setStartDate(routeParams.startDate);
+      if (routeParams.endDate) setEndDate(routeParams.endDate);
+      if (routeParams.rooms) setRooms(routeParams.rooms);
+      if (routeParams.adults) setAdults(routeParams.adults);
+      if (routeParams.children) setChildren(routeParams.children);
+      if (routeParams.selectedPrice !== undefined) setSelectedPrice(routeParams.selectedPrice);
+      if (routeParams.selectedStars) setSelectedStars(routeParams.selectedStars);
+    }
+  }, [routeParams]);
 
   // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {

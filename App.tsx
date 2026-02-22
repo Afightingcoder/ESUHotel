@@ -29,7 +29,7 @@ const App = () => {
   // 返回上一页
   const navigateBack = (params?: any) => {
     if (currentRoute === 'list') {
-      navigateTo('search');
+      navigateTo('search', params);
     }
     if (currentRoute === 'detail') {
       navigateTo('list', params || routeParams);
@@ -40,7 +40,7 @@ const App = () => {
   const renderCurrentPage = () => {
     switch (currentRoute) {
       case 'search':
-        return <HotelSearch navigateTo={navigateTo} />;
+        return <HotelSearch navigateTo={navigateTo} routeParams={routeParams} />;
       case 'list':
         return <HotelList navigateTo={navigateTo} routeParams={routeParams} />;
       case 'detail':
@@ -48,7 +48,7 @@ const App = () => {
           <HotelDetail navigateBack={navigateBack} routeParams={routeParams} />
         );
       default:
-        return <HotelSearch navigateTo={navigateTo} />;
+        return <HotelSearch navigateTo={navigateTo} routeParams={routeParams} />;
     }
   };
 

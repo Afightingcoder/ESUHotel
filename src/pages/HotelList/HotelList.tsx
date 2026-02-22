@@ -267,7 +267,17 @@ const HotelListPage = ({
         <View style={styles.headerLeftContent}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => navigateTo('hotelSearch')}>
+            onPress={() => navigateTo('hotelSearch', {
+              location,
+              keyword: searchKeyword,
+              startDate,
+              endDate,
+              rooms,
+              adults,
+              children,
+              selectedPrice,
+              selectedStars,
+            })}>
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
           <TouchableOpacity

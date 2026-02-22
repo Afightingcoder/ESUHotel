@@ -18,12 +18,6 @@ export const roomTagsMap: Record<string, string> = {
   breakfast: "含早餐",
   parking: "免费停车",
   gym: "健身房",
-  pool: "泳池",
-  aircon: "空调",
-  tv: "电视",
-  minibar: "迷你吧",
-  safe: "保险箱",
-  bathtub: "浴缸",
 };
 
 // 床型映射关系
