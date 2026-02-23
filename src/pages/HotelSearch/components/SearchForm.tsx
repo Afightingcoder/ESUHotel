@@ -10,6 +10,7 @@ import LocationSelector from '../../../components/LocationSelector';
 import DateSelector from '../../../components/DateSelector';
 import GuestSelector from '../../../components/GuestSelector';
 import ModalBase from '../../../components/ModalBase';
+import QuickTags from './QuickTags';
 import {priceOptions} from '../../../constants/quickTags';
 
 interface SearchFormProps {
@@ -154,6 +155,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
       </TouchableOpacity>
       <View style={styles.horizontalDivider} />
 
+      <QuickTags keyword={keyword} onTagPress={setKeyword} />
       <TouchableOpacity style={styles.searchBtn} onPress={onSearch}>
         <Text style={styles.searchBtnText}>查询酒店</Text>
       </TouchableOpacity>

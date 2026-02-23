@@ -9,7 +9,6 @@ import {init} from 'react-native-amap-geolocation';
 import {useHotelSearch} from './hooks/useHotelSearch';
 import SearchBanner from './components/SearchBanner';
 import SearchForm from './components/SearchForm';
-import QuickTags from './components/QuickTags';
 import FilterModal from './components/FilterModal';
 
 const HotelSearchPage = ({
@@ -159,8 +158,6 @@ const HotelSearchPage = ({
         setIsFilterModalVisible={setIsFilterModalVisible}
         onSearch={handleSearch}
       />
-
-      <QuickTags keyword={keyword} onTagPress={setKeyword} />
 
       <LoadingModal visible={loading} message="紧急定位ing~" />
 
