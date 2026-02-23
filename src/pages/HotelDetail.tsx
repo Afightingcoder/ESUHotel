@@ -13,6 +13,8 @@ import {
 import Calendar from '../components/Calendar';
 import GuestSelector from '../components/GuestSelector';
 import {amenitiesMap, roomTagsMap, bedTypeMap} from '../utils/mappings';
+import {getImageUrl} from '../utils/api';
+import type {HotelType} from '../types';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -25,48 +27,59 @@ const HotelDetailPage = ({
 }) => {
   // 获取当前酒店数据 - 不使用模拟数据，只使用接口返回的数据
   const currentHotel = routeParams?.hotelDetail;
-  
+
   // 只在组件首次挂载时输出调试信息
   useEffect(() => {
-    console.log('===接收详情', currentHotel, '地点=====', routeParams?.location);
+    console.log(
+      '===接收详情',
+      currentHotel,
+      '地点=====',
+      routeParams?.location,
+    );
   }, []); // 空依赖数组，只在挂载时执行一次
 
   // 日期状态管理
-  const [startDate, setStartDate] = useState<string>(routeParams?.startDate || '2026-03-10');
-  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || '2026-03-11');
-  
+  const [startDate, setStartDate] = useState<string>(
+    routeParams?.startDate || '2026-03-10',
+  );
+  const [endDate, setEndDate] = useState<string>(
+    routeParams?.endDate || '2026-03-11',
+  );
+
   // 房间和人数状态管理
   const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
   const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
-  
+
   // 弹窗状态
-  const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
-  
+  const [isGuestModalVisible, setIsGuestModalVisible] =
+    useState<boolean>(false);
+
   // 轮播图状态
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   };
-  
+
   // 使用useMemo缓存轮播图数据，避免每次渲染都重新计算
   const bannerData = useMemo(() => {
-    const data = currentHotel?.photos && currentHotel.photos.length > 0
-      ? currentHotel.photos
-          .map((photo: any) => photo?.url)
-          .filter((url: string) => url && url.trim())
-      : ['https://picsum.photos/id/1031/800/400'];
-    
+    const data =
+      currentHotel?.photos && currentHotel.photos.length > 0
+        ? currentHotel.photos
+            .map((photo: any) => getImageUrl(photo?.url))
+            .filter((url: string) => url && url.trim())
+        : ['https://picsum.photos/id/1031/800/400'];
+
     // 只在数据变化时输出
     console.log('----轮播图数据更新---', data.length, '张图片');
     return data;
   }, [currentHotel?.photos]);
-    
+
   // 自动播放轮播图
   useEffect(() => {
     if (bannerData.length > 1) {
@@ -81,33 +94,36 @@ const HotelDetailPage = ({
         });
       }, 3000);
     }
-    
+
     return () => {
       if (autoPlayTimerRef.current) {
         clearInterval(autoPlayTimerRef.current);
       }
     };
   }, [bannerData.length]);
-  
+
   // 使用useCallback优化handleScroll函数，避免每次渲染都创建新函数
-  const handleScroll = useCallback((event: any) => {
-    const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / SCREEN_WIDTH);
-    setActiveIndex(prevIndex => {
-      if (index !== prevIndex && index >= 0 && index < bannerData.length) {
-        return index;
-      }
-      return prevIndex;
-    });
-  }, [bannerData.length]);
-  
+  const handleScroll = useCallback(
+    (event: any) => {
+      const contentOffset = event.nativeEvent.contentOffset.x;
+      const index = Math.round(contentOffset / SCREEN_WIDTH);
+      setActiveIndex(prevIndex => {
+        if (index !== prevIndex && index >= 0 && index < bannerData.length) {
+          return index;
+        }
+        return prevIndex;
+      });
+    },
+    [bannerData.length],
+  );
+
   // 使用useCallback缓存renderPagination函数
   const renderPagination = useCallback(() => {
     if (bannerData.length <= 1) return null;
-    
+
     return (
       <View style={styles.paginationContainer}>
-        {bannerData.map((_, index) => (
+        {bannerData.map((_: string, index: number) => (
           <View
             key={index}
             style={[
@@ -119,26 +135,29 @@ const HotelDetailPage = ({
       </View>
     );
   }, [bannerData.length, activeIndex]);
-  
+
   // 使用useCallback缓存renderItem函数，避免每次渲染都创建新函数
-  const renderBannerItem = useCallback(({ item }: { item: string }) => (
-    <Image
-      source={{ 
-        uri: item,
-        cache: 'force-cache' 
-      }}
-      style={styles.detailBanner}
-      onError={() => console.log('图片加载失败：', item)}
-    />
-  ), []);
+  const renderBannerItem = useCallback(
+    ({item}: {item: string}) => (
+      <Image
+        source={{
+          uri: item,
+          cache: 'force-cache',
+        }}
+        style={styles.detailBanner}
+        onError={() => console.log('图片加载失败：', item)}
+      />
+    ),
+    [],
+  );
 
   return (
     <ScrollView style={styles.pageContainer}>
       {/* 顶部导航头 */}
       <View style={styles.detailHeader}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
-            navigateBack({ 
+            navigateBack({
               startDate,
               endDate,
               rooms,
@@ -157,9 +176,8 @@ const HotelDetailPage = ({
               },
               sortType: routeParams?.sortType || 'default',
             });
-          }} 
-          style={styles.backBtn}
-        >
+          }}
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.detailTitle}>{currentHotel.name}</Text>
@@ -192,9 +210,13 @@ const HotelDetailPage = ({
         <View style={styles.baseInfoRow}>
           <Text style={styles.hotelNameLarge}>{currentHotel.name}</Text>
           <View style={styles.hotelInfoRight}>
-            <Text style={styles.hotelStarLarge}>{'🌟'.repeat(currentHotel.star)}</Text>
+            <Text style={styles.hotelStarLarge}>
+              {'🌟'.repeat(currentHotel.star)}
+            </Text>
             {currentHotel.openingDate && (
-              <Text style={styles.openingDate}>{currentHotel.openingDate.split('-')[0]}年开业</Text>
+              <Text style={styles.openingDate}>
+                {currentHotel.openingDate.split('-')[0]}年开业
+              </Text>
             )}
           </View>
         </View>
@@ -225,8 +247,12 @@ const HotelDetailPage = ({
         <View style={styles.roomNightContainer}>
           <View style={styles.roomNightContent}>
             <Text style={styles.roomNightLabel}>入住间夜</Text>
-            <TouchableOpacity style={styles.roomNightBtn} onPress={() => setIsGuestModalVisible(true)}>
-              <Text style={styles.roomNightText}>{rooms}间{adults+children}人 ▼</Text>
+            <TouchableOpacity
+              style={styles.roomNightBtn}
+              onPress={() => setIsGuestModalVisible(true)}>
+              <Text style={styles.roomNightText}>
+                {rooms}间{adults + children}人 ▼
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -242,16 +268,25 @@ const HotelDetailPage = ({
           .map(roomType => (
             <View key={roomType._id.$oid} style={styles.roomTypeItem}>
               <View style={styles.roomTypeLeftContent}>
-                {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
-                  <Image 
-                    source={{uri: roomType.photos[0].url}} 
+                {roomType.photos &&
+                roomType.photos.length > 0 &&
+                roomType.photos[0].url ? (
+                  <Image
+                    source={{uri: getImageUrl(roomType.photos[0].url)}}
                     style={styles.roomTypeImage}
-                    defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
-                    onError={() => console.log('房型图片加载失败：', roomType.photos[0].url)}
+                    defaultSource={{
+                      uri: 'https://picsum.photos/id/1031/800/400',
+                    }}
+                    onError={() =>
+                      console.log(
+                        '房型图片加载失败：',
+                        getImageUrl(roomType.photos[0].url),
+                      )
+                    }
                   />
                 ) : (
-                  <Image 
-                    source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
+                  <Image
+                    source={{uri: 'https://picsum.photos/id/1031/800/400'}}
                     style={styles.roomTypeImage}
                   />
                 )}
@@ -259,7 +294,8 @@ const HotelDetailPage = ({
                   <Text style={styles.roomTypeName}>{roomType.name}</Text>
                   <View style={styles.roomTypeDetails}>
                     <Text style={styles.roomTypeDetailText}>
-                      {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住{roomType.capacity}人
+                      {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住
+                      {roomType.capacity}人
                     </Text>
                   </View>
                   {roomType.tags && roomType.tags.length > 0 && (
@@ -278,7 +314,9 @@ const HotelDetailPage = ({
                 <Text style={styles.roomPrice}>{roomType.price}</Text>
                 <Text style={styles.roomPriceDesc}>/晚</Text>
                 <View style={styles.roomTypeBottomRow}>
-                  <Text style={styles.roomTypeDesc}>仅剩 {roomType.stock} 间</Text>
+                  <Text style={styles.roomTypeDesc}>
+                    仅剩 {roomType.stock} 间
+                  </Text>
                   <TouchableOpacity style={styles.bookBtn}>
                     <Text style={styles.bookBtnText}>立即预订</Text>
                   </TouchableOpacity>

@@ -16,7 +16,7 @@ import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestSelector from '../../components/GuestSelector';
 import {formatDate} from '../../utils/dateUtils';
-import {getHotelList, getHotelDetail} from '../../utils/api';
+import {getHotelList, getHotelDetail, getImageUrl} from '../../utils/api';
 import {amenitiesMap} from '../../utils/mappings';
 import {styles} from './styles';
 // 导入react-native-amap-geolocation库
@@ -29,9 +29,11 @@ const HotelSearchPage = ({
   navigateTo: (route: RouteType, params?: any) => void;
   routeParams?: any;
 }) => {
-  const [location, setLocation] = useState<string>(routeParams?.location || '上海');
+  const [location, setLocation] = useState<string>(
+    routeParams?.location || '上海',
+  );
   const [keyword, setKeyword] = useState<string>(routeParams?.keyword || '');
-  
+
   // Banner酒店数据
   const [bannerHotel, setBannerHotel] = useState<any>(null);
 
@@ -52,8 +54,12 @@ const HotelSearchPage = ({
     ).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
   };
 
-  const [startDate, setStartDate] = useState<string>(routeParams?.startDate || getTodayDate());
-  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || getTomorrowDate());
+  const [startDate, setStartDate] = useState<string>(
+    routeParams?.startDate || getTodayDate(),
+  );
+  const [endDate, setEndDate] = useState<string>(
+    routeParams?.endDate || getTomorrowDate(),
+  );
   const [filters, setFilters] = useState<{
     star: number[];
     priceRange: number[];
@@ -84,9 +90,13 @@ const HotelSearchPage = ({
   const [isFilterModalVisible, setIsFilterModalVisible] =
     useState<boolean>(false);
   // 价格区间选择状态（单选）
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(
+    routeParams?.selectedPrice || null,
+  );
   // 星级选择状态（多选）
-  const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
+  const [selectedStars, setSelectedStars] = useState<number[]>(
+    routeParams?.selectedStars || [],
+  );
 
   // 快捷标签数据
   const quickTags = [
@@ -116,7 +126,7 @@ const HotelSearchPage = ({
   useEffect(() => {
     const fetchBannerHotel = async () => {
       try {
-        const response = await getHotelDetail('699991a1170b3e7f4f8f0c8a');
+        const response = await getHotelDetail('699b08ebea44f20434e38c9c');
         if (response && response.data) {
           setBannerHotel(response.data);
         }
@@ -124,7 +134,7 @@ const HotelSearchPage = ({
         console.error('获取banner酒店数据失败:', error);
       }
     };
-    
+
     fetchBannerHotel();
   }, []);
 
@@ -138,8 +148,10 @@ const HotelSearchPage = ({
       if (routeParams.rooms) setRooms(routeParams.rooms);
       if (routeParams.adults) setAdults(routeParams.adults);
       if (routeParams.children) setChildren(routeParams.children);
-      if (routeParams.selectedPrice !== undefined) setSelectedPrice(routeParams.selectedPrice);
-      if (routeParams.selectedStars) setSelectedStars(routeParams.selectedStars);
+      if (routeParams.selectedPrice !== undefined)
+        setSelectedPrice(routeParams.selectedPrice);
+      if (routeParams.selectedStars)
+        setSelectedStars(routeParams.selectedStars);
     }
   }, [routeParams]);
 
@@ -161,7 +173,7 @@ const HotelSearchPage = ({
         rooms,
         guests: adults + children, // 将成人和儿童数量合并为guests
       };
-      
+
       // 处理价格区间
       if (selectedPrice !== null) {
         const priceRanges: Record<number, {min?: number; max?: number}> = {
@@ -173,25 +185,25 @@ const HotelSearchPage = ({
           1400: {min: 900, max: 1400},
           1401: {min: 1400},
         };
-        
+
         const priceRange = priceRanges[selectedPrice];
         if (priceRange) {
           if (priceRange.min) searchParams.minPrice = priceRange.min;
           if (priceRange.max) searchParams.maxPrice = priceRange.max;
         }
       }
-      
+
       // 处理星级
       if (selectedStars.length > 0) {
         searchParams.stars = selectedStars;
       }
-      
+
       console.log('搜索参数:', searchParams);
-      
+
       // 调用API获取酒店列表
       const hotelList = await getHotelList(searchParams);
       console.log('获取酒店列表成功:', hotelList);
-      
+
       // 导航到列表页
       navigateTo('list', {
         location,
@@ -218,22 +230,31 @@ const HotelSearchPage = ({
       {bannerHotel && (
         <TouchableOpacity
           style={styles.bannerContainer}
-          onPress={() => navigateTo('detail', {
-            hotelId: bannerHotel.id,
-            hotelDetail: bannerHotel,
-            startDate: formatDate(startDate),
-            endDate: formatDate(endDate),
-            rooms,
-            adults,
-            children,
-          })}>
+          onPress={() =>
+            navigateTo('detail', {
+              hotelId: bannerHotel.id,
+              hotelDetail: bannerHotel,
+              startDate: formatDate(startDate),
+              endDate: formatDate(endDate),
+              rooms,
+              adults,
+              children,
+            })
+          }>
           <ImageBackground
-            source={{uri: bannerHotel.photos?.[0]?.url || 'https://picsum.photos/id/1031/800/400'}}
+            source={{
+              uri:
+                getImageUrl(bannerHotel.photos?.[0]?.url) ||
+                'https://picsum.photos/id/1031/800/400',
+            }}
             style={styles.bannerImage}>
             <View style={styles.bannerOverlay}>
               <Text style={styles.bannerTitle}>{bannerHotel.name}</Text>
               <Text style={styles.bannerSubtitle}>
-                {bannerHotel.amenities?.slice(0, 3).map((amenity: string) => amenitiesMap[amenity] || amenity).join(' · ') || '豪华体验 · 优质服务'}
+                {bannerHotel.amenities
+                  ?.slice(0, 3)
+                  .map((amenity: string) => amenitiesMap[amenity] || amenity)
+                  .join(' · ') || '豪华体验 · 优质服务'}
               </Text>
             </View>
           </ImageBackground>
@@ -703,7 +724,5 @@ const HotelSearchPage = ({
     </ScrollView>
   );
 };
-
-
 
 export default HotelSearchPage;
