@@ -1,6 +1,29 @@
 // API封装文件
 import {mockHotels} from '../data/mockData';
+import {mockHotels} from '../data/mockData';
 
+// 服务器基础地址
+const SERVER_BASE = 'http://192.168.10.6:3000';
+
+// API基地址
+export const BASE_URL = `${SERVER_BASE}/api`;
+
+// 图片URL处理函数
+export const getImageUrl = (url: string): string => {
+  if (!url) return '';
+
+  // 如果是完整URL且包含localhost，替换为服务器IP
+  if (url.includes('localhost:3000')) {
+    return url.replace('localhost:3000', '192.168.10.6:3000');
+  }
+
+  // 如果是相对路径，添加服务器基础地址
+  if (url.startsWith('/uploads')) {
+    return `${SERVER_BASE}${url}`;
+  }
+
+  return url;
+};
 // 服务器基础地址
 const SERVER_BASE = 'http://192.168.10.6:3000';
 
@@ -81,8 +104,12 @@ async function fetchApi(url: string, options: RequestInit = {}): Promise<any> {
 export const getHotelList = async (
   params?: HotelSearchParams,
 ): Promise<any> => {
+export const getHotelList = async (
+  params?: HotelSearchParams,
+): Promise<any> => {
   // 构建查询字符串
   const queryParams = new URLSearchParams();
+
 
   if (params) {
     if (params.location) queryParams.append('location', params.location);
@@ -95,12 +122,21 @@ export const getHotelList = async (
       queryParams.append('minPrice', params.minPrice.toString());
     if (params.maxPrice)
       queryParams.append('maxPrice', params.maxPrice.toString());
+    if (params.minPrice)
+      queryParams.append('minPrice', params.minPrice.toString());
+    if (params.maxPrice)
+      queryParams.append('maxPrice', params.maxPrice.toString());
     if (params.stars && params.stars.length > 0) {
       queryParams.append('stars', params.stars.join(','));
     }
   }
 
+
   const queryString = queryParams.toString();
+  const url = queryString
+    ? `/admin/hotels/published?${queryString}`
+    : '/admin/hotels/published';
+
   const url = queryString
     ? `/admin/hotels/published?${queryString}`
     : '/admin/hotels/published';

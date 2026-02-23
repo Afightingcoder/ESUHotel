@@ -13,7 +13,10 @@ import {
 import Calendar from '../components/Calendar';
 import GuestSelector from '../components/GuestSelector';
 import {amenitiesMap, roomTagsMap, bedTypeMap} from '../utils/mappings';
-import {getHotelDetail} from '../utils/api';
+import {getImageUrl} from '../utils/api';
+import type {HotelType} from '../types';
+
+type RoomType = HotelType['roomTypes'][0];
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -24,14 +27,18 @@ const HotelDetailPage = ({
   navigateBack: (params?: any) => void;
   routeParams: any;
 }) => {
-  // 获取当前酒店数据
-  const hotelId = routeParams?.hotelId;
-  const [currentHotel, setCurrentHotel] = useState<any>(routeParams?.hotelDetail);
-  
+  // 获取当前酒店数据 - 不使用模拟数据，只使用接口返回的数据
+  const currentHotel = routeParams?.hotelDetail;
+
   // 只在组件首次挂载时输出调试信息
   useEffect(() => {
-    console.log('===接收详情', currentHotel, '地点=====', routeParams?.location);
-  }, []);
+    console.log(
+      '===接收详情',
+      currentHotel,
+      '地点=====',
+      routeParams?.location,
+    );
+  }, []); // 空依赖数组，只在挂载时执行一次
 
   // 日期状态管理
   const [startDate, setStartDate] = useState<string>(
@@ -54,38 +61,13 @@ const HotelDetailPage = ({
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // 刷新酒店详情
-  const refreshHotelDetail = async () => {
-    try {
-      const response = await getHotelDetail(hotelId, {
-        startDate,
-        endDate,
-        rooms,
-        guests: adults + children,
-      });
-      if (response && response.data) {
-        setCurrentHotel(response.data);
-        console.log('===刷新酒店详情成功', response.data);
-      }
-    } catch (error) {
-      console.error('刷新酒店详情失败:', error);
-    }
-  };
-  
+
   // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   };
-  
-  // 日期变化时刷新
-  useEffect(() => {
-    if (startDate && endDate && hotelId) {
-      refreshHotelDetail();
-    }
-  }, [startDate, endDate]);
-  
+
   // 使用useMemo缓存轮播图数据，避免每次渲染都重新计算
   const bannerData = useMemo(() => {
     const data =
@@ -280,125 +262,70 @@ const HotelDetailPage = ({
 
       {/* 房型价格列表 */}
       <View style={styles.roomTypesContainer}>
-        {/* 可预订房型 */}
-        {currentHotel.roomTypes?.available && currentHotel.roomTypes.available.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>
-              可预订房型（{currentHotel.roomTypes.available.length}种）
-            </Text>
-            {currentHotel.roomTypes.available
-              .sort((a, b) => a.price - b.price)
-              .map(roomType => (
-                <View key={roomType._id.$oid} style={styles.roomTypeItem}>
-                  <View style={styles.roomTypeLeftContent}>
-                    {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
-                      <Image 
-                        source={{uri: roomType.photos[0].url}} 
-                        style={styles.roomTypeImage}
-                        defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
-                        onError={() => console.log('房型图片加载失败：', roomType.photos[0].url)}
-                      />
-                    ) : (
-                      <Image 
-                        source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
-                        style={styles.roomTypeImage}
-                      />
-                    )}
-                    <View style={styles.roomTypeInfo}>
-                      <Text style={styles.roomTypeName}>{roomType.name}</Text>
-                      <View style={styles.roomTypeDetails}>
-                        <Text style={styles.roomTypeDetailText}>
-                          {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住{roomType.capacity}人
+        <Text style={styles.sectionTitle}>
+          房型价格（{currentHotel.roomTypes.length}种房型）
+        </Text>
+        {currentHotel.roomTypes
+          .sort((a: RoomType, b: RoomType) => a.price - b.price) // 按价格从低到高排序
+          .map((roomType: RoomType) => (
+            <View key={roomType._id.$oid} style={styles.roomTypeItem}>
+              <View style={styles.roomTypeLeftContent}>
+                {roomType.photos &&
+                roomType.photos.length > 0 &&
+                roomType.photos[0].url ? (
+                  <Image
+                    source={{uri: getImageUrl(roomType.photos[0].url)}}
+                    style={styles.roomTypeImage}
+                    defaultSource={{
+                      uri: 'https://picsum.photos/id/1031/800/400',
+                    }}
+                    onError={() =>
+                      console.log(
+                        '房型图片加载失败：',
+                        getImageUrl(roomType.photos[0].url),
+                      )
+                    }
+                  />
+                ) : (
+                  <Image
+                    source={{uri: 'https://picsum.photos/id/1031/800/400'}}
+                    style={styles.roomTypeImage}
+                  />
+                )}
+                <View style={styles.roomTypeInfo}>
+                  <Text style={styles.roomTypeName}>{roomType.name}</Text>
+                  <View style={styles.roomTypeDetails}>
+                    <Text style={styles.roomTypeDetailText}>
+                      {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住
+                      {roomType.capacity}人
+                    </Text>
+                  </View>
+                  {roomType.tags && roomType.tags.length > 0 && (
+                    <View style={styles.roomTypeTags}>
+                      {roomType.tags.map((tag: string, index: number) => (
+                        <Text key={index} style={styles.roomTypeTagText}>
+                          {roomTagsMap[tag] || tag}
                         </Text>
-                      </View>
-                      {roomType.tags && roomType.tags.length > 0 && (
-                        <View style={styles.roomTypeTags}>
-                          {roomType.tags.map((tag, index) => (
-                            <Text key={index} style={styles.roomTypeTagText}>
-                              {roomTagsMap[tag] || tag}
-                            </Text>
-                          ))}
-                        </View>
-                      )}
+                      ))}
                     </View>
-                  </View>
-                  <View style={styles.roomTypePrice}>
-                    <Text style={styles.roomPriceSymbol}>¥</Text>
-                    <Text style={styles.roomPrice}>{roomType.price}</Text>
-                    <Text style={styles.roomPriceDesc}>/晚</Text>
-                    <View style={styles.roomTypeBottomRow}>
-                      <Text style={styles.roomTypeDesc}>仅剩 {roomType.stock} 间</Text>
-                      <TouchableOpacity style={styles.bookBtn}>
-                        <Text style={styles.bookBtnText}>立即预订</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  )}
                 </View>
-              ))}
-          </>
-        )}
-        
-        {/* 不可预订房型 */}
-        {currentHotel.roomTypes?.unavailable && currentHotel.roomTypes.unavailable.length > 0 && (
-          <>
-            <View style={styles.unavailableDivider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>👥 以下房型不满足{rooms}间{adults+children}人</Text>
-              <View style={styles.dividerLine} />
+              </View>
+              <View style={styles.roomTypePrice}>
+                <Text style={styles.roomPriceSymbol}>¥</Text>
+                <Text style={styles.roomPrice}>{roomType.price}</Text>
+                <Text style={styles.roomPriceDesc}>/晚</Text>
+                <View style={styles.roomTypeBottomRow}>
+                  <Text style={styles.roomTypeDesc}>
+                    仅剩 {roomType.stock} 间
+                  </Text>
+                  <TouchableOpacity style={styles.bookBtn}>
+                    <Text style={styles.bookBtnText}>立即预订</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-            {currentHotel.roomTypes.unavailable
-              .sort((a, b) => a.price - b.price)
-              .map(roomType => (
-                <View key={roomType._id.$oid} style={styles.roomTypeItem}>
-                  <View style={styles.roomTypeLeftContent}>
-                    {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
-                      <Image 
-                        source={{uri: roomType.photos[0].url}} 
-                        style={styles.roomTypeImage}
-                        defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
-                      />
-                    ) : (
-                      <Image 
-                        source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
-                        style={styles.roomTypeImage}
-                      />
-                    )}
-                    <View style={styles.roomTypeInfo}>
-                      <Text style={styles.roomTypeName}>{roomType.name}</Text>
-                      <View style={styles.roomTypeDetails}>
-                        <Text style={styles.roomTypeDetailText}>
-                          {bedTypeMap[roomType.bedType] || roomType.bedType} · 可住{roomType.capacity}人
-                        </Text>
-                      </View>
-                      {roomType.tags && roomType.tags.length > 0 && (
-                        <View style={styles.roomTypeTags}>
-                          {roomType.tags.map((tag, index) => (
-                            <Text key={index} style={styles.roomTypeTagText}>
-                              {roomTagsMap[tag] || tag}
-                            </Text>
-                          ))}
-                        </View>
-                      )}
-                      {roomType.unavailableReason && (
-                        <Text style={styles.unavailableReason}>{roomType.unavailableReason}</Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={styles.roomTypePrice}>
-                    <Text style={styles.roomPriceSymbol}>¥</Text>
-                    <Text style={styles.roomPrice}>{roomType.price}</Text>
-                    <Text style={styles.roomPriceDesc}>/晚</Text>
-                    <View style={styles.roomTypeBottomRow}>
-                      <Text style={styles.roomTypeDesc}>仅剩 {roomType.stock} 间</Text>
-                      <TouchableOpacity style={styles.bookBtn}>
-                        <Text style={styles.bookBtnText}>立即预订</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              ))}
-          </>
-        )}
+          ))}
       </View>
 
       {/* 选择客房和入住人数弹窗 */}
