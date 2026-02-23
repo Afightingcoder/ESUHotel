@@ -32,7 +32,7 @@ export const useHotelSearch = (routeParams?: any) => {
   useEffect(() => {
     const fetchBannerHotel = async () => {
       try {
-        const response = await getHotelDetail('699b08ebea44f20434e38c9c');
+        const response = await getHotelDetail('699c5d72026539d0dd6b6bbe');
         if (response && response.data) {
           setBannerHotel(response.data);
         }
