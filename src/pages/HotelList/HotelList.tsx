@@ -135,10 +135,18 @@ const HotelListPage = ({
     
     switch (sortType) {
       case 'price_low':
-        result.sort((a, b) => (a.roomTypes?.[0]?.price || 0) - (b.roomTypes?.[0]?.price || 0));
+        result.sort((a, b) => {
+          const priceA = a.roomTypes?.available?.[0]?.price || a.roomTypes?.[0]?.price || 0;
+          const priceB = b.roomTypes?.available?.[0]?.price || b.roomTypes?.[0]?.price || 0;
+          return priceA - priceB;
+        });
         break;
       case 'price_high':
-        result.sort((a, b) => (b.roomTypes?.[0]?.price || 0) - (a.roomTypes?.[0]?.price || 0));
+        result.sort((a, b) => {
+          const priceA = a.roomTypes?.available?.[0]?.price || a.roomTypes?.[0]?.price || 0;
+          const priceB = b.roomTypes?.available?.[0]?.price || b.roomTypes?.[0]?.price || 0;
+          return priceB - priceA;
+        });
         break;
       case 'star_high':
         result.sort((a, b) => b.star - a.star);
@@ -235,7 +243,12 @@ const HotelListPage = ({
   const renderHotelItem = ({item}: {item: HotelType}) => {
     const handlePress = async () => {
       try {
-        const hotelDetail = await getHotelDetail(`${item.id}`);
+        const hotelDetail = await getHotelDetail(`${item.id}`, {
+          startDate,
+          endDate,
+          rooms,
+          guests: adults + children,
+        });
         console.log('===单个酒店详情', hotelDetail.data.amenities);
         navigateTo('detail', {
           hotelId: item.id,
@@ -294,7 +307,9 @@ const HotelListPage = ({
           <View style={styles.hotelPriceContainer}>
             <View style={styles.priceWrapper}>
               <Text style={styles.hotelPriceSymbol}>¥</Text>
-              <Text style={styles.hotelPrice}>{item.roomTypes[0].price}</Text>
+              <Text style={styles.hotelPrice}>
+                {item.roomTypes?.available?.[0]?.price || item.roomTypes?.[0]?.price || '暂无'}
+              </Text>
               <Text style={styles.hotelPriceDesc}>起/晚</Text>
             </View>
           </View>

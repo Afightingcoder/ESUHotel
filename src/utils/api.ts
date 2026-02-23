@@ -16,6 +16,14 @@ export interface HotelSearchParams {
   stars?: number[];         // 星级数组
 }
 
+// 酒店详情参数类型
+export interface HotelDetailParams {
+  startDate?: string;       // 入住日期
+  endDate?: string;         // 离店日期
+  rooms?: number;           // 房间数
+  guests?: number;          // 总人数（成人+儿童）
+}
+
 /**
  * 通用fetch请求函数
  * @param url 请求路径
@@ -76,10 +84,23 @@ export const getHotelList = async (params?: HotelSearchParams): Promise<any> => 
 /**
  * 获取单个酒店详情
  * @param hotelId 酒店ID
+ * @param params 查询参数（入住日期、离店日期、房间数、人数）
  * @returns Promise<any> 酒店详情数据
  */
-export const getHotelDetail = async (hotelId: string): Promise<any> => {
-  return fetchApi(`/hotels/detail/${hotelId}`);
+export const getHotelDetail = async (hotelId: string, params?: HotelDetailParams): Promise<any> => {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    if (params.rooms) queryParams.append('rooms', params.rooms.toString());
+    if (params.guests) queryParams.append('guests', params.guests.toString());
+  }
+  
+  const queryString = queryParams.toString();
+  const url = queryString ? `/hotels/detail/${hotelId}?${queryString}` : `/hotels/detail/${hotelId}`;
+  
+  return fetchApi(url);
 };
 
 /**
