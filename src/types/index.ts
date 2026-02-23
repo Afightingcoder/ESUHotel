@@ -1,5 +1,5 @@
 // 路由类型
-export type RouteType = 'search' | 'list' | 'detail';
+export type RouteType = 'search' | 'hotelSearch' | 'list' | 'detail';
 
 // 酒店类型
 export type HotelType = {
