@@ -16,6 +16,8 @@ import {amenitiesMap, roomTagsMap, bedTypeMap} from '../utils/mappings';
 import {getImageUrl} from '../utils/api';
 import type {HotelType} from '../types';
 
+type RoomType = HotelType['roomTypes'][0];
+
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const HotelDetailPage = ({
@@ -264,8 +266,8 @@ const HotelDetailPage = ({
           房型价格（{currentHotel.roomTypes.length}种房型）
         </Text>
         {currentHotel.roomTypes
-          .sort((a, b) => a.price - b.price) // 按价格从低到高排序
-          .map(roomType => (
+          .sort((a: RoomType, b: RoomType) => a.price - b.price) // 按价格从低到高排序
+          .map((roomType: RoomType) => (
             <View key={roomType._id.$oid} style={styles.roomTypeItem}>
               <View style={styles.roomTypeLeftContent}>
                 {roomType.photos &&
@@ -300,7 +302,7 @@ const HotelDetailPage = ({
                   </View>
                   {roomType.tags && roomType.tags.length > 0 && (
                     <View style={styles.roomTypeTags}>
-                      {roomType.tags.map((tag, index) => (
+                      {roomType.tags.map((tag: string, index: number) => (
                         <Text key={index} style={styles.roomTypeTagText}>
                           {roomTagsMap[tag] || tag}
                         </Text>
