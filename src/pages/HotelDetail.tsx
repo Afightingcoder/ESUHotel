@@ -362,7 +362,6 @@ const HotelDetailPage = ({
                 style={styles.confirmButton}
                 onPress={() => {
                   setIsGuestModalVisible(false);
-                  refreshHotelDetail();
                 }}>
                 <Text style={styles.confirmButtonText}>确认</Text>
               </TouchableOpacity>
