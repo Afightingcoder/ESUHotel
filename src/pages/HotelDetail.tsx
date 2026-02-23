@@ -365,9 +365,6 @@ const HotelDetailPage = ({
                           })}
                         </View>
                       )}
-                      {roomType.unavailableReason && (
-                        <Text style={styles.unavailableReason}>{roomType.unavailableReason}</Text>
-                      )}
                     </View>
                   </View>
                   <View style={styles.roomTypePrice}>
