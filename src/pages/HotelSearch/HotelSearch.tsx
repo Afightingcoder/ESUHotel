@@ -102,13 +102,21 @@ const HotelSearchPage = ({
     return () => {};
   }, []);
 
-  // 获取banner酒店数据
+  // 获取banner酒店数据（动态获取酒店列表第一个）
   useEffect(() => {
     const fetchBannerHotel = async () => {
       try {
-        const response = await getHotelDetail('699991a1170b3e7f4f8f0c8a');
-        if (response && response.data) {
-          setBannerHotel(response.data);
+        const response = await getHotelList();
+        if (response && response.length > 0) {
+          const firstHotel = response[0];
+          if (firstHotel.id) {
+            const detailResponse = await getHotelDetail(firstHotel.id);
+            if (detailResponse && detailResponse.data) {
+              setBannerHotel(detailResponse.data);
+            }
+          } else {
+            setBannerHotel(firstHotel);
+          }
         }
       } catch (error) {
         console.error('获取banner酒店数据失败:', error);
@@ -216,6 +224,7 @@ const HotelSearchPage = ({
             rooms,
             adults,
             children,
+            fromRoute: 'search',
           })}>
           <ImageBackground
             source={{uri: bannerHotel.photos?.[0]?.url || 'https://picsum.photos/id/1031/800/400'}}

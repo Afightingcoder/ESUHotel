@@ -19,20 +19,24 @@ const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const [currentRoute, setCurrentRoute] = useState<RouteType>('search');
   const [routeParams, setRouteParams] = useState<any>({});
+  const [previousRoute, setPreviousRoute] = useState<RouteType | null>(null);
 
   // 路由跳转方法
   const navigateTo = (route: RouteType, params?: any) => {
     setRouteParams(params || {});
+    setPreviousRoute(currentRoute);
     setCurrentRoute(route);
   };
 
   // 返回上一页
   const navigateBack = (params?: any) => {
-    if (currentRoute === 'list') {
+    const targetRoute = routeParams?.fromRoute || previousRoute || 'search';
+    if (targetRoute === 'search') {
       navigateTo('search', params);
-    }
-    if (currentRoute === 'detail') {
+    } else if (targetRoute === 'list') {
       navigateTo('list', params || routeParams);
+    } else {
+      navigateTo('search', params);
     }
   };
 

@@ -257,6 +257,7 @@ const HotelListPage = ({
           selectedStars,
           advancedFilters,
           sortType,
+          fromRoute: 'list',
         });
       } catch (error) {
         console.error('网络请求错误:', error);
@@ -274,6 +275,7 @@ const HotelListPage = ({
           selectedStars,
           advancedFilters,
           sortType,
+          fromRoute: 'list',
         });
       }
     };

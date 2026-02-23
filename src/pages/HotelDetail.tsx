@@ -268,8 +268,8 @@ const HotelDetailPage = ({
             </Text>
             {currentHotel.roomTypes.available
               .sort((a, b) => a.price - b.price)
-              .map(roomType => (
-                <View key={roomType._id.$oid} style={styles.roomTypeItem}>
+              .map((roomType, index) => (
+                <View key={roomType._id?.$oid} style={styles.roomTypeItem}>
                   <View style={styles.roomTypeLeftContent}>
                     {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
                       <Image 
@@ -293,11 +293,14 @@ const HotelDetailPage = ({
                       </View>
                       {roomType.tags && roomType.tags.length > 0 && (
                         <View style={styles.roomTypeTags}>
-                          {roomType.tags.map((tag, index) => (
-                            <Text key={index} style={styles.roomTypeTagText}>
-                              {roomTagsMap[tag] || tag}
-                            </Text>
-                          ))}
+                          {roomType.tags.map((tag, index) => {
+                            const roomId = roomType._id?.$oid;
+                            return (
+                              <Text key={`tag_${roomId}_${index}`} style={styles.roomTypeTagText}>
+                                {roomTagsMap[tag] || tag}
+                              </Text>
+                            );
+                          })}
                         </View>
                       )}
                     </View>
@@ -328,8 +331,8 @@ const HotelDetailPage = ({
             </View>
             {currentHotel.roomTypes.unavailable
               .sort((a, b) => a.price - b.price)
-              .map(roomType => (
-                <View key={roomType._id.$oid} style={styles.roomTypeItem}>
+              .map((roomType, index) => (
+                <View key={roomType._id?.$oid} style={styles.roomTypeItem}>
                   <View style={styles.roomTypeLeftContent}>
                     {roomType.photos && roomType.photos.length > 0 && roomType.photos[0].url ? (
                       <Image 
@@ -352,11 +355,14 @@ const HotelDetailPage = ({
                       </View>
                       {roomType.tags && roomType.tags.length > 0 && (
                         <View style={styles.roomTypeTags}>
-                          {roomType.tags.map((tag, index) => (
-                            <Text key={index} style={styles.roomTypeTagText}>
-                              {roomTagsMap[tag] || tag}
-                            </Text>
-                          ))}
+                          {roomType.tags.map((tag, index) => {
+                            const roomId = roomType._id?.$oid;
+                            return (
+                              <Text key={`unavail_tag_${roomId}_${index}`} style={styles.roomTypeTagText}>
+                                {roomTagsMap[tag] || tag}
+                              </Text>
+                            );
+                          })}
                         </View>
                       )}
                       {roomType.unavailableReason && (
