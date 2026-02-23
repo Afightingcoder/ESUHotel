@@ -17,12 +17,14 @@ interface LocationSelectorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  onGetLocation?: () => void;
 }
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   value,
   onChange,
   placeholder = '输入城市',
+  onGetLocation,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -35,6 +37,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           {
             title: '位置权限',
             message: '需要获取您的位置信息以提供更好的服务',
+            buttonPositive: '确定',
           },
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
@@ -48,8 +51,13 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
   };
 
-  // 获取当前位置
+  // 获取当前地点
   const getCurrentLocation = async () => {
+    if (onGetLocation) {
+      onGetLocation();
+      return;
+    }
+
     // 显示加载弹窗
     setLoading(true);
 
@@ -62,7 +70,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         return;
       }
 
-      // 获取当前位置 - 使用react-native-amap-geolocation
+      // 获取当前地点 - 使用react-native-amap-geolocation
       AMapGeolocation.getCurrentPosition(
         position => {
           console.log('位置', position);
@@ -136,26 +144,16 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder}
-          autoCapitalize="none"
-          keyboardType="default"
-          autoCorrect={false}
-        />
-        {/* 竖线分隔符 */}
-        <View style={styles.verticalDivider} />
-        <TouchableOpacity
-          style={styles.locationButton}
-          onPress={getCurrentLocation}>
-          <Text style={styles.locationIcon}>📍</Text>
-          <Text style={styles.locationButtonText}>当前地点</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        autoCapitalize="none"
+        keyboardType="default"
+        autoCorrect={false}
+      />
 
       {/* 加载弹窗 */}
       <LoadingModal visible={loading} message="正在紧急定位中" />
@@ -164,45 +162,15 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     width: '100%',
     height: 44,
   },
   input: {
-    flex: 1,
+    width: '100%',
     height: 44,
-    paddingHorizontal: 12,
-    fontSize: 14,
-  },
-  verticalDivider: {
-    width: 0.5,
-    height: '60%',
-    backgroundColor: '#ddd',
-    marginHorizontal: 8,
-  },
-  locationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 4,
-    paddingRight: 8,
-    paddingVertical: 6,
-    backgroundColor: '#e6f7ff',
-    borderRadius: 20,
-    justifyContent: 'center',
-  },
-  locationIcon: {
-    fontSize: 16,
-    marginRight: 2,
-  },
-  locationButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1890ff',
+    paddingHorizontal: 0,
+    fontSize: 18,
   },
 });
 

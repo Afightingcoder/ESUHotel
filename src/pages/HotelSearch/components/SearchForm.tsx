@@ -1,16 +1,22 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
+import qs from 'qs';
+import {Geolocation as AMapGeolocation} from 'react-native-amap-geolocation';
 import LocationSelector from '../../../components/LocationSelector';
 import DateSelector from '../../../components/DateSelector';
 import GuestSelector from '../../../components/GuestSelector';
 import ModalBase from '../../../components/ModalBase';
 import QuickTags from './QuickTags';
+import LoadingModal from '../../../components/LoadingModal';
 import {priceOptions} from '../../../constants/quickTags';
 
 interface SearchFormProps {
@@ -58,6 +64,101 @@ const SearchForm: React.FC<SearchFormProps> = ({
   setIsFilterModalVisible,
   onSearch,
 }) => {
+  const [locationLoading, setLocationLoading] = useState<boolean>(false);
+
+  // 请求定位权限
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: '位置权限',
+            message: '需要获取您的位置信息以提供更好的服务',
+            buttonPositive: '确定',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } else {
+        // iOS 权限请求会在定位时自动触发
+        return true;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  // 获取当前地点
+  const getCurrentLocation = async () => {
+    setLocationLoading(true);
+
+    try {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) {
+        Alert.alert('定位权限被拒绝', '请在设置中开启定位权限');
+        setLocationLoading(false);
+        return;
+      }
+
+      AMapGeolocation.getCurrentPosition(
+        position => {
+          const {latitude, longitude} = position.coords;
+          const aMapParams = {
+            key: '06bce1963ddc5fbd277faea82fd638fb',
+            poitype: 'all',
+            radius: 3000,
+            output: 'json',
+            extensions: 'all',
+            roadlevel: 0,
+            location: `${longitude},${latitude}`,
+          };
+
+          const aMapBaseURL = 'https://restapi.amap.com/v3/geocode/regeo';
+          const aMapLocationURL = `${aMapBaseURL}?${qs.stringify(aMapParams)}`;
+
+          fetch(aMapLocationURL)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === '1') {
+                const addressComponent = data.regeocode.addressComponent;
+                if (addressComponent) {
+                  let addressParts = [];
+                  if (addressComponent.city) {
+                    addressParts.push(addressComponent.city);
+                  }
+                  if (addressComponent.district) {
+                    addressParts.push(addressComponent.district);
+                  }
+                  if (addressComponent.township) {
+                    addressParts.push(addressComponent.township);
+                  }
+
+                  const streetLevelAddress = addressParts.join('');
+                  setLocation(streetLevelAddress);
+                }
+              } else {
+                setLocation(`${longitude.toFixed(4)},${latitude.toFixed(4)}`);
+              }
+              setLocationLoading(false);
+            })
+            .catch(_ => {
+              setLocation(`${longitude.toFixed(4)},${latitude.toFixed(4)}`);
+              setLocationLoading(false);
+            });
+        },
+        error => {
+          Alert.alert('定位失败', error.message);
+          setLocationLoading(false);
+        },
+      );
+    } catch (error) {
+      console.log('定位过程中出现错误:', error);
+      Alert.alert('定位失败', '获取位置信息时出现错误');
+      setLocationLoading(false);
+    }
+  };
+
   const getFilterLabel = () => {
     const priceLabel = selectedPrice
       ? priceOptions.find(item => item.value === selectedPrice)?.label
@@ -69,25 +170,32 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
   return (
     <View style={styles.searchContainer}>
-      <View style={styles.locationSearchItem}>
-        <View style={styles.locationContainer}>
-          <View style={styles.floatingLabelInputContainer}>
-            {location ? <Text style={styles.floatingLabel}>位置</Text> : null}
-            <View
-              style={[
-                styles.searchInput,
-                location ? styles.searchInputWithValue : undefined,
-              ]}>
-              <LocationSelector
-                value={location}
-                onChange={setLocation}
-                placeholder="位置"
-              />
-            </View>
+      <View style={styles.searchItem}>
+        <TouchableOpacity
+          style={styles.locationBtn}
+          onPress={getCurrentLocation}>
+          <Text style={styles.locationBtnText}>📍</Text>
+          <Text style={styles.locationBtnLabel}>当前地点</Text>
+        </TouchableOpacity>
+        <View style={styles.floatingLabelInputContainer}>
+          {location ? <Text style={styles.floatingLabel}>位置</Text> : null}
+          <View style={styles.locationInputWrapper}>
+            <LocationSelector
+              value={location}
+              onChange={setLocation}
+              placeholder={!location ? '位置' : ''}
+            />
           </View>
+          {location ? (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => setLocation('')}>
+              <Text style={styles.clearButtonText}>✕</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
-        <View style={styles.horizontalDivider} />
       </View>
+      <View style={styles.horizontalDivider} />
 
       <View style={styles.searchItem}>
         <Text style={styles.searchLabel}>🔍</Text>
@@ -180,6 +288,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
           <Text style={styles.confirmButtonText}>确认</Text>
         </TouchableOpacity>
       </ModalBase>
+
+      <LoadingModal visible={locationLoading} message="正在紧急定位中" />
     </View>
   );
 };
@@ -198,16 +308,31 @@ const styles = StyleSheet.create({
   searchItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 36,
+    minHeight: 44,
   },
-  locationSearchItem: {
-    flexDirection: 'column',
-    marginBottom: 12,
-  },
+
   searchLabel: {
     fontSize: 18,
     color: '#333',
     fontWeight: '500',
+  },
+  locationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  locationBtnText: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  locationBtnLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#1890ff',
   },
   searchInput: {
     flex: 1,
@@ -215,18 +340,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 18,
   },
+  locationInputWrapper: {
+    flex: 1,
+    height: 44,
+  },
   horizontalDivider: {
     width: '100%',
     height: 0.5,
     backgroundColor: '#eee',
     marginTop: 8,
     marginBottom: 8,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    height: 40,
   },
   floatingLabelInputContainer: {
     flex: 1,
