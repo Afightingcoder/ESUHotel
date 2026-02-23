@@ -262,7 +262,7 @@ const HotelDetailPage = ({
       <View style={styles.roomTypesContainer}>
         {/* 可预订房型 */}
         {currentHotel.roomTypes?.available && currentHotel.roomTypes.available.length > 0 && (
-          <>
+          <View key="available_rooms_section">
             <Text style={styles.sectionTitle}>
               可预订房型（{currentHotel.roomTypes.available.length}种）
             </Text>
@@ -315,12 +315,12 @@ const HotelDetailPage = ({
                   </View>
                 </View>
               ))}
-          </>
+          </View>
         )}
         
         {/* 不可预订房型 */}
         {currentHotel.roomTypes?.unavailable && currentHotel.roomTypes.unavailable.length > 0 && (
-          <>
+          <View key="unavailable_rooms_section">
             <View style={styles.unavailableDivider}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>👥 以下房型不满足{rooms}间{adults+children}人</Text>
@@ -377,7 +377,7 @@ const HotelDetailPage = ({
                   </View>
                 </View>
               ))}
-          </>
+          </View>
         )}
       </View>
 
