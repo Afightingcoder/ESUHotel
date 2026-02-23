@@ -15,6 +15,7 @@ import LoadingModal from '../../components/LoadingModal';
 import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
 import GuestModal from '../../components/GuestModal';
+import PriceStarFilter from '../../components/PriceStarFilter';
 import {formatDate} from '../../utils/dateUtils';
 import {getHotelList, getHotelDetail} from '../../utils/api';
 import {amenitiesMap} from '../../utils/mappings';
@@ -148,7 +149,7 @@ const HotelSearchPage = ({
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
         rooms,
-        guests: adults + children, // 将成人和儿童数量合并为guests
+        guests: adults + children,
       };
       
       // 处理价格区间
@@ -191,7 +192,7 @@ const HotelSearchPage = ({
         rooms,
         adults,
         children,
-        hotels: hotelList, // 传递获取到的酒店列表
+        hotels: hotelList,
         selectedPrice,
         selectedStars,
       });
@@ -414,114 +415,25 @@ const HotelSearchPage = ({
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.filterModalContent}>
-                {/* 价格区间 */}
-                <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>价格</Text>
-                  <View style={styles.filterOptions}>
-                    {[
-                      {id: 1, label: '￥200以下', value: 200},
-                      {id: 2, label: '￥200-￥350', value: 350},
-                      {id: 3, label: '￥350-￥400', value: 400},
-                      {id: 4, label: '￥400-￥500', value: 500},
-                      {id: 5, label: '￥500-￥900', value: 900},
-                      {id: 6, label: '￥900-￥1400', value: 1400},
-                      {id: 7, label: '￥1400以上', value: 1401},
-                    ].map(item => (
-                      <TouchableOpacity
-                        key={`price_${item.id}`}
-                        style={[
-                          styles.filterOptionItem,
-                          selectedPrice === item.value &&
-                            styles.filterOptionItemActive,
-                        ]}
-                        onPress={() => setSelectedPrice(item.value)}>
-                        <Text
-                          style={[
-                            styles.filterOptionText,
-                            selectedPrice === item.value &&
-                              styles.filterOptionTextActive,
-                          ]}>
-                          {item.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* 星级/钻级 */}
-                <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>星级/钻级</Text>
-                  <View style={styles.filterOptions}>
-                    {[
-                      {id: 1, label: '2星及以下', value: 2, desc: '经济'},
-                      {id: 2, label: '3星', value: 3, desc: '舒适'},
-                      {id: 3, label: '4星', value: 4, desc: '高档'},
-                      {id: 4, label: '5星', value: 5, desc: '豪华'},
-                    ].map(item => (
-                      <TouchableOpacity
-                        key={`star_${item.id}`}
-                        style={[
-                          styles.filterOptionItem,
-                          selectedStars.includes(item.value) &&
-                            styles.filterOptionItemActive,
-                        ]}
-                        onPress={() => {
-                          if (selectedStars.includes(item.value)) {
-                            setSelectedStars(
-                              selectedStars.filter(star => star !== item.value),
-                            );
-                          } else {
-                            setSelectedStars([...selectedStars, item.value]);
-                          }
-                        }}>
-                        <View>
-                          <Text
-                            style={[
-                              styles.filterOptionText,
-                              selectedStars.includes(item.value) &&
-                                styles.filterOptionTextActive,
-                            ]}>
-                            {item.label}
-                          </Text>
-                          <Text style={styles.filterOptionDesc}>
-                            {item.desc}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.filterModalFooter}>
-                <TouchableOpacity
-                  style={[
-                    styles.filterModalButton,
-                    styles.filterModalClearButton,
-                  ]}
-                  onPress={() => {
-                    setSelectedPrice(null);
-                    setSelectedStars([]);
-                  }}>
-                  <Text style={styles.filterModalClearButtonText}>清空</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterModalButton,
-                    styles.filterModalConfirmButton,
-                  ]}
-                  onPress={() => {
-                    // 将选择结果应用到filters状态
-                    setFilters({
-                      star: selectedStars,
-                      priceRange: selectedPrice ? [selectedPrice] : [],
-                    });
-                    setIsFilterModalVisible(false);
-                  }}>
-                  <Text style={styles.filterModalConfirmButtonText}>完成</Text>
-                </TouchableOpacity>
-              </View>
+              <PriceStarFilter
+                visible={isFilterModalVisible}
+                onClose={() => setIsFilterModalVisible(false)}
+                onFilterChange={(price, stars) => {
+                  setSelectedPrice(price);
+                  setSelectedStars(stars);
+                  setFilters({
+                    star: stars,
+                    priceRange: price ? [price] : [],
+                  });
+                }}
+                currentPrice={selectedPrice}
+                currentStars={selectedStars}
+                onRealTimeChange={(price, stars) => {
+                  setSelectedPrice(price);
+                  setSelectedStars(stars);
+                }}
+                standalone={false}
+              />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

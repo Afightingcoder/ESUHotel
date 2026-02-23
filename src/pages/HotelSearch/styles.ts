@@ -277,6 +277,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
+    paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -433,7 +434,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 30,
     maxHeight: '80%',
   },
   filterModalContent: {

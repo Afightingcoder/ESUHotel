@@ -15,6 +15,7 @@ interface PriceStarFilterProps {
   currentPrice: number | null;
   currentStars: number[];
   onRealTimeChange?: (price: number | null, stars: number[]) => void;
+  standalone?: boolean;
 }
 
 const priceRanges = [
@@ -41,6 +42,7 @@ const PriceStarFilter: React.FC<PriceStarFilterProps> = ({
   currentPrice,
   currentStars,
   onRealTimeChange,
+  standalone = true,
 }) => {
   const [selectedPrice, setSelectedPrice] = useState<number | null>(currentPrice);
   const [selectedStars, setSelectedStars] = useState<number[]>(currentStars);
@@ -79,6 +81,90 @@ const PriceStarFilter: React.FC<PriceStarFilterProps> = ({
     }
   };
 
+  const renderContent = () => (
+    <>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>价格</Text>
+        <View style={styles.tagsContainer}>
+          {priceRanges.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              style={[
+                styles.tagItem,
+                selectedPrice === option.key && styles.tagItemActive,
+              ]}
+              onPress={() => handlePriceSelect(option.key)}>
+              <Text
+                style={[
+                  styles.tagText,
+                  selectedPrice === option.key && styles.tagTextActive,
+                ]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>星级/钻级</Text>
+        <View style={styles.tagsContainer}>
+          {starOptions.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              style={[
+                styles.tagItem,
+                selectedStars.includes(option.key) && styles.tagItemActive,
+              ]}
+              onPress={() => handleStarToggle(option.key)}>
+              <View style={styles.starTagContent}>
+                <Text
+                  style={[
+                    styles.tagText,
+                    selectedStars.includes(option.key) && styles.tagTextActive,
+                  ]}>
+                  {option.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.tagDesc,
+                    selectedStars.includes(option.key) && styles.tagTextActive,
+                  ]}>
+                  {option.desc}
+                </Text>
+              </View>
+              <Text style={[
+                styles.checkMark,
+                !selectedStars.includes(option.key) && styles.checkMarkHidden,
+              ]}>✓</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={handleClear}>
+          <Text style={styles.clearButtonText}>清空</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirm}>
+          <Text style={styles.confirmButtonText}>完成</Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
+  if (!standalone) {
+    return (
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {renderContent()}
+      </ScrollView>
+    );
+  }
+
   return (
     <Modal
       visible={visible}
@@ -90,80 +176,7 @@ const PriceStarFilter: React.FC<PriceStarFilterProps> = ({
         <View style={styles.container}>
           <TouchableOpacity activeOpacity={1}>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* 价格部分 */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>价格</Text>
-                <View style={styles.tagsContainer}>
-                  {priceRanges.map(option => (
-                    <TouchableOpacity
-                      key={option.key}
-                      style={[
-                        styles.tagItem,
-                        selectedPrice === option.key && styles.tagItemActive,
-                      ]}
-                      onPress={() => handlePriceSelect(option.key)}>
-                      <Text
-                        style={[
-                          styles.tagText,
-                          selectedPrice === option.key && styles.tagTextActive,
-                        ]}>
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* 星级部分 */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>星级/钻级</Text>
-                <View style={styles.tagsContainer}>
-                  {starOptions.map(option => (
-                    <TouchableOpacity
-                      key={option.key}
-                      style={[
-                        styles.tagItem,
-                        selectedStars.includes(option.key) && styles.tagItemActive,
-                      ]}
-                      onPress={() => handleStarToggle(option.key)}>
-                      <View style={styles.starTagContent}>
-                        <Text
-                          style={[
-                            styles.tagText,
-                            selectedStars.includes(option.key) && styles.tagTextActive,
-                          ]}>
-                          {option.label}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.tagDesc,
-                            selectedStars.includes(option.key) && styles.tagTextActive,
-                          ]}>
-                          {option.desc}
-                        </Text>
-                      </View>
-                      <Text style={[
-                        styles.checkMark,
-                        !selectedStars.includes(option.key) && styles.checkMarkHidden,
-                      ]}>✓</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* 底部按钮 */}
-              <View style={styles.footer}>
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={handleClear}>
-                  <Text style={styles.clearButtonText}>清空</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.confirmButton}
-                  onPress={handleConfirm}>
-                  <Text style={styles.confirmButtonText}>完成</Text>
-                </TouchableOpacity>
-              </View>
+              {renderContent()}
             </ScrollView>
           </TouchableOpacity>
         </View>
