@@ -34,17 +34,22 @@ const HotelDetailPage = ({
   }, []);
 
   // 日期状态管理
-  const [startDate, setStartDate] = useState<string>(routeParams?.startDate || '2026-03-10');
-  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || '2026-03-11');
-  
+  const [startDate, setStartDate] = useState<string>(
+    routeParams?.startDate || '2026-03-10',
+  );
+  const [endDate, setEndDate] = useState<string>(
+    routeParams?.endDate || '2026-03-11',
+  );
+
   // 房间和人数状态管理
   const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
   const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
-  
+
   // 弹窗状态
-  const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
-  
+  const [isGuestModalVisible, setIsGuestModalVisible] =
+    useState<boolean>(false);
+
   // 轮播图状态
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
@@ -83,17 +88,18 @@ const HotelDetailPage = ({
   
   // 使用useMemo缓存轮播图数据，避免每次渲染都重新计算
   const bannerData = useMemo(() => {
-    const data = currentHotel?.photos && currentHotel.photos.length > 0
-      ? currentHotel.photos
-          .map((photo: any) => photo?.url)
-          .filter((url: string) => url && url.trim())
-      : ['https://picsum.photos/id/1031/800/400'];
-    
+    const data =
+      currentHotel?.photos && currentHotel.photos.length > 0
+        ? currentHotel.photos
+            .map((photo: any) => getImageUrl(photo?.url))
+            .filter((url: string) => url && url.trim())
+        : ['https://picsum.photos/id/1031/800/400'];
+
     // 只在数据变化时输出
     console.log('----轮播图数据更新---', data.length, '张图片');
     return data;
   }, [currentHotel?.photos]);
-    
+
   // 自动播放轮播图
   useEffect(() => {
     if (bannerData.length > 1) {
@@ -108,33 +114,36 @@ const HotelDetailPage = ({
         });
       }, 3000);
     }
-    
+
     return () => {
       if (autoPlayTimerRef.current) {
         clearInterval(autoPlayTimerRef.current);
       }
     };
   }, [bannerData.length]);
-  
+
   // 使用useCallback优化handleScroll函数，避免每次渲染都创建新函数
-  const handleScroll = useCallback((event: any) => {
-    const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / SCREEN_WIDTH);
-    setActiveIndex(prevIndex => {
-      if (index !== prevIndex && index >= 0 && index < bannerData.length) {
-        return index;
-      }
-      return prevIndex;
-    });
-  }, [bannerData.length]);
-  
+  const handleScroll = useCallback(
+    (event: any) => {
+      const contentOffset = event.nativeEvent.contentOffset.x;
+      const index = Math.round(contentOffset / SCREEN_WIDTH);
+      setActiveIndex(prevIndex => {
+        if (index !== prevIndex && index >= 0 && index < bannerData.length) {
+          return index;
+        }
+        return prevIndex;
+      });
+    },
+    [bannerData.length],
+  );
+
   // 使用useCallback缓存renderPagination函数
   const renderPagination = useCallback(() => {
     if (bannerData.length <= 1) return null;
-    
+
     return (
       <View style={styles.paginationContainer}>
-        {bannerData.map((_, index) => (
+        {bannerData.map((_: string, index: number) => (
           <View
             key={index}
             style={[
@@ -146,26 +155,29 @@ const HotelDetailPage = ({
       </View>
     );
   }, [bannerData.length, activeIndex]);
-  
+
   // 使用useCallback缓存renderItem函数，避免每次渲染都创建新函数
-  const renderBannerItem = useCallback(({ item }: { item: string }) => (
-    <Image
-      source={{ 
-        uri: item,
-        cache: 'force-cache' 
-      }}
-      style={styles.detailBanner}
-      onError={() => console.log('图片加载失败：', item)}
-    />
-  ), []);
+  const renderBannerItem = useCallback(
+    ({item}: {item: string}) => (
+      <Image
+        source={{
+          uri: item,
+          cache: 'force-cache',
+        }}
+        style={styles.detailBanner}
+        onError={() => console.log('图片加载失败：', item)}
+      />
+    ),
+    [],
+  );
 
   return (
     <ScrollView style={styles.pageContainer}>
       {/* 顶部导航头 */}
       <View style={styles.detailHeader}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
-            navigateBack({ 
+            navigateBack({
               startDate,
               endDate,
               rooms,
@@ -184,9 +196,8 @@ const HotelDetailPage = ({
               },
               sortType: routeParams?.sortType || 'default',
             });
-          }} 
-          style={styles.backBtn}
-        >
+          }}
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.detailTitle}>{currentHotel.name}</Text>
@@ -219,9 +230,13 @@ const HotelDetailPage = ({
         <View style={styles.baseInfoRow}>
           <Text style={styles.hotelNameLarge}>{currentHotel.name}</Text>
           <View style={styles.hotelInfoRight}>
-            <Text style={styles.hotelStarLarge}>{'🌟'.repeat(currentHotel.star)}</Text>
+            <Text style={styles.hotelStarLarge}>
+              {'🌟'.repeat(currentHotel.star)}
+            </Text>
             {currentHotel.openingDate && (
-              <Text style={styles.openingDate}>{currentHotel.openingDate.split('-')[0]}年开业</Text>
+              <Text style={styles.openingDate}>
+                {currentHotel.openingDate.split('-')[0]}年开业
+              </Text>
             )}
           </View>
         </View>
@@ -252,8 +267,12 @@ const HotelDetailPage = ({
         <View style={styles.roomNightContainer}>
           <View style={styles.roomNightContent}>
             <Text style={styles.roomNightLabel}>入住间夜</Text>
-            <TouchableOpacity style={styles.roomNightBtn} onPress={() => setIsGuestModalVisible(true)}>
-              <Text style={styles.roomNightText}>{rooms}间{adults+children}人 ▼</Text>
+            <TouchableOpacity
+              style={styles.roomNightBtn}
+              onPress={() => setIsGuestModalVisible(true)}>
+              <Text style={styles.roomNightText}>
+                {rooms}间{adults + children}人 ▼
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -20,12 +20,16 @@ import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
 import {formatDate} from '../../utils/dateUtils';
 import {styles} from './styles';
-import {getHotelDetail, getHotelList} from '../../utils/api';
-import {amenitiesMap, removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
+import {getHotelDetail, getHotelList, getImageUrl} from '../../utils/api';
+import {
+  amenitiesMap,
+  removeFilterKeywords,
+  parseKeywordFilters,
+} from '../../utils/mappings';
 
 const HotelListPage = ({
   navigateTo,
-  routeParams
+  routeParams,
 }: {
   navigateTo: (route: RouteType, params?: any) => void;
   routeParams: any;
@@ -45,11 +49,19 @@ const HotelListPage = ({
   // 处理从详情页返回的数据更新
   React.useEffect(() => {
     console.log('接收到的routeParams:', routeParams);
-    
+
     // 检查是否有updatedData字段
     if (routeParams?.updatedData) {
       console.log('接收到的更新数据:', routeParams.updatedData);
-      const { startDate: updatedStartDate, endDate: updatedEndDate, rooms: updatedRooms, adults: updatedAdults, children: updatedChildren, hotels: hotels, location: location } = routeParams.updatedData;
+      const {
+        startDate: updatedStartDate,
+        endDate: updatedEndDate,
+        rooms: updatedRooms,
+        adults: updatedAdults,
+        children: updatedChildren,
+        hotels: hotels,
+        location: location,
+      } = routeParams.updatedData;
       if (updatedStartDate) setStartDate(updatedStartDate);
       if (updatedEndDate) setEndDate(updatedEndDate);
       if (location) setLocation(location);
@@ -58,25 +70,43 @@ const HotelListPage = ({
       if (updatedChildren) setChildren(updatedChildren);
       if (hotels) setHotels(hotels);
     }
-  }, [routeParams, setStartDate, setEndDate, setRooms, setAdults, setChildren, setHotels, setLocation]); 
+  }, [
+    routeParams,
+    setStartDate,
+    setEndDate,
+    setRooms,
+    setAdults,
+    setChildren,
+    setHotels,
+    setLocation,
+  ]);
 
   // 初始化酒店数据 - 不使用模拟数据，只使用接口返回的数据
   React.useEffect(() => {
     console.log('酒店列表数据:', hotels);
   }, [hotels]);
   // 搜索框输入内容
-  const [searchKeyword, setSearchKeyword] = useState<string>(routeParams?.keyword || '');
+  const [searchKeyword, setSearchKeyword] = useState<string>(
+    routeParams?.keyword || '',
+  );
 
   // 筛选弹窗状态
-  const [isSortFilterVisible, setIsSortFilterVisible] = useState<boolean>(false);
-  const [isPriceStarFilterVisible, setIsPriceStarFilterVisible] = useState<boolean>(false);
-  const [isAdvancedFilterVisible, setIsAdvancedFilterVisible] = useState<boolean>(false);
-  
+  const [isSortFilterVisible, setIsSortFilterVisible] =
+    useState<boolean>(false);
+  const [isPriceStarFilterVisible, setIsPriceStarFilterVisible] =
+    useState<boolean>(false);
+  const [isAdvancedFilterVisible, setIsAdvancedFilterVisible] =
+    useState<boolean>(false);
+
   // 筛选条件状态
   const [sortType, setSortType] = useState<string>('default');
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
-  const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
-  
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(
+    routeParams?.selectedPrice || null,
+  );
+  const [selectedStars, setSelectedStars] = useState<number[]>(
+    routeParams?.selectedStars || [],
+  );
+
   const [advancedFilters, setAdvancedFilters] = useState<{
     hotFilters: string[];
     accommodationTypes: string[];
@@ -90,10 +120,14 @@ const HotelListPage = ({
   // 处理从详情页返回时的数据更新
   React.useEffect(() => {
     if (routeParams) {
-      if (routeParams.keyword !== undefined) setSearchKeyword(routeParams.keyword);
-      if (routeParams.selectedPrice !== undefined) setSelectedPrice(routeParams.selectedPrice);
-      if (routeParams.selectedStars) setSelectedStars(routeParams.selectedStars);
-      if (routeParams.advancedFilters) setAdvancedFilters(routeParams.advancedFilters);
+      if (routeParams.keyword !== undefined)
+        setSearchKeyword(routeParams.keyword);
+      if (routeParams.selectedPrice !== undefined)
+        setSelectedPrice(routeParams.selectedPrice);
+      if (routeParams.selectedStars)
+        setSelectedStars(routeParams.selectedStars);
+      if (routeParams.advancedFilters)
+        setAdvancedFilters(routeParams.advancedFilters);
       if (routeParams.sortType) setSortType(routeParams.sortType);
       if (routeParams.startDate) setStartDate(routeParams.startDate);
       if (routeParams.endDate) setEndDate(routeParams.endDate);
@@ -108,15 +142,18 @@ const HotelListPage = ({
   // 弹窗状态
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   // 客房和人数选择弹窗状态
-  const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
+  const [isGuestModalVisible, setIsGuestModalVisible] =
+    useState<boolean>(false);
   // 数字选择弹窗状态
-  const [isNumberModalVisible, setIsNumberModalVisible] = useState<boolean>(false);
-  const [currentSelectType, setCurrentSelectType] = useState<'rooms' | 'adults' | 'children' | null>(null);
+  const [isNumberModalVisible, setIsNumberModalVisible] =
+    useState<boolean>(false);
+  const [currentSelectType, setCurrentSelectType] = useState<
+    'rooms' | 'adults' | 'children' | null
+  >(null);
   // 输入数字状态
   const [inputNumber, setInputNumber] = useState<string>('');
-  const [isInputModalVisible, setIsInputModalVisible] = useState<boolean>(false);
-
-
+  const [isInputModalVisible, setIsInputModalVisible] =
+    useState<boolean>(false);
 
   // 上滑加载更多（模拟）
   const handleLoadMore = () => {
@@ -132,21 +169,19 @@ const HotelListPage = ({
   // 前端排序后的酒店列表
   const sortedHotels = useMemo(() => {
     let result = [...hotels];
-    
+
     switch (sortType) {
       case 'price_low':
-        result.sort((a, b) => {
-          const priceA = a.roomTypes?.available?.[0]?.price || a.roomTypes?.[0]?.price || 0;
-          const priceB = b.roomTypes?.available?.[0]?.price || b.roomTypes?.[0]?.price || 0;
-          return priceA - priceB;
-        });
+        result.sort(
+          (a, b) =>
+            (a.roomTypes?.[0]?.price || 0) - (b.roomTypes?.[0]?.price || 0),
+        );
         break;
       case 'price_high':
-        result.sort((a, b) => {
-          const priceA = a.roomTypes?.available?.[0]?.price || a.roomTypes?.[0]?.price || 0;
-          const priceB = b.roomTypes?.available?.[0]?.price || b.roomTypes?.[0]?.price || 0;
-          return priceB - priceA;
-        });
+        result.sort(
+          (a, b) =>
+            (b.roomTypes?.[0]?.price || 0) - (a.roomTypes?.[0]?.price || 0),
+        );
         break;
       case 'star_high':
         result.sort((a, b) => b.star - a.star);
@@ -154,7 +189,7 @@ const HotelListPage = ({
       default:
         break;
     }
-    
+
     return result;
   }, [hotels, sortType]);
 
@@ -180,7 +215,8 @@ const HotelListPage = ({
       };
 
       // 处理价格区间
-      const priceToUse = params?.price !== undefined ? params.price : selectedPrice;
+      const priceToUse =
+        params?.price !== undefined ? params.price : selectedPrice;
       if (priceToUse !== null) {
         const priceRanges: Record<number, {min?: number; max?: number}> = {
           200: {max: 200},
@@ -191,7 +227,7 @@ const HotelListPage = ({
           1400: {min: 900, max: 1400},
           1401: {min: 1400},
         };
-        
+
         const priceRange = priceRanges[priceToUse];
         if (priceRange) {
           if (priceRange.min) searchParams.minPrice = priceRange.min;
@@ -208,7 +244,7 @@ const HotelListPage = ({
       // 处理筛选选项，添加到keyword中
       const filtersToUse = params?.filters || advancedFilters;
       const filterKeywords: string[] = [];
-      
+
       if (filtersToUse.hotFilters.length > 0) {
         filterKeywords.push(...filtersToUse.hotFilters);
       }
@@ -221,16 +257,18 @@ const HotelListPage = ({
       if (filtersToUse.roomFeatures.length > 0) {
         filterKeywords.push(...filtersToUse.roomFeatures);
       }
-      
+
       if (filterKeywords.length > 0) {
-        searchParams.keyword = searchKeyword ? `${searchKeyword} ${filterKeywords.join(' ')}` : filterKeywords.join(' ');
+        searchParams.keyword = searchKeyword
+          ? `${searchKeyword} ${filterKeywords.join(' ')}`
+          : filterKeywords.join(' ');
       }
 
       console.log('搜索参数:', searchParams);
-      
+
       const hotelList = await getHotelList(searchParams);
       console.log('获取酒店列表成功:', hotelList);
-      
+
       if (hotelList) {
         setHotels(hotelList);
       }
@@ -287,10 +325,11 @@ const HotelListPage = ({
     };
 
     return (
-      <TouchableOpacity
-        style={styles.hotelItem}
-        onPress={handlePress}>
-        <Image source={{uri: item.photos[0].url}} style={styles.hotelImage} />
+      <TouchableOpacity style={styles.hotelItem} onPress={handlePress}>
+        <Image
+          source={{uri: getImageUrl(item.photos[0].url)}}
+          style={styles.hotelImage}
+        />
         <View style={styles.hotelInfo}>
           <View style={styles.hotelNameContainer}>
             <Text style={styles.hotelName}>{item.name}</Text>
@@ -298,17 +337,21 @@ const HotelListPage = ({
           </View>
           <Text style={styles.hotelAddress}>{item.address}</Text>
           <View style={styles.hotelTags}>
-            {item.amenities && item.amenities.length > 0 && item.amenities.map((amenity: string, index: number) => (
-              <Text key={index} style={styles.hotelTagText}>
-                {amenitiesMap[amenity] || amenity}
-              </Text>
-            ))}
+            {item.amenities &&
+              item.amenities.length > 0 &&
+              item.amenities.map((amenity: string, index: number) => (
+                <Text key={index} style={styles.hotelTagText}>
+                  {amenitiesMap[amenity] || amenity}
+                </Text>
+              ))}
           </View>
           <View style={styles.hotelPriceContainer}>
             <View style={styles.priceWrapper}>
               <Text style={styles.hotelPriceSymbol}>¥</Text>
               <Text style={styles.hotelPrice}>
-                {item.roomTypes?.available?.[0]?.price || item.roomTypes?.[0]?.price || '暂无'}
+                {item.roomTypes?.available?.[0]?.price ||
+                  item.roomTypes?.[0]?.price ||
+                  '暂无'}
               </Text>
               <Text style={styles.hotelPriceDesc}>起/晚</Text>
             </View>
@@ -325,17 +368,19 @@ const HotelListPage = ({
         <View style={styles.headerLeftContent}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => navigateTo('hotelSearch', {
-              location,
-              keyword: searchKeyword,
-              startDate,
-              endDate,
-              rooms,
-              adults,
-              children,
-              selectedPrice,
-              selectedStars,
-            })}>
+            onPress={() =>
+              navigateTo('hotelSearch', {
+                location,
+                keyword: searchKeyword,
+                startDate,
+                endDate,
+                rooms,
+                adults,
+                children,
+                selectedPrice,
+                selectedStars,
+              })
+            }>
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -343,14 +388,20 @@ const HotelListPage = ({
             onPress={() => {
               setIsModalVisible(true);
             }}>
-            <Text style={styles.headerInfoText} numberOfLines={2}>{location}</Text>
+            <Text style={styles.headerInfoText} numberOfLines={2}>
+              {location}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerInfoItem}
             onPress={() => {
               setIsModalVisible(true);
             }}>
-            <Text style={styles.headerInfoText} numberOfLines={2}>{ `住 ${formatDate(startDate)} 离 ${formatDate(endDate)}`}</Text>
+            <Text
+              style={styles.headerInfoText}
+              numberOfLines={2}>{`住 ${formatDate(startDate)} 离 ${formatDate(
+              endDate,
+            )}`}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerInfoItem}
@@ -358,8 +409,8 @@ const HotelListPage = ({
               setIsModalVisible(true);
             }}>
             <Text style={[styles.headerInfoText, {maxWidth: 20}]}>
-              {rooms}间{adults+children}人
-          </Text>
+              {rooms}间{adults + children}人
+            </Text>
           </TouchableOpacity>
           {/* 搜索框 */}
           <View style={styles.searchBoxContainer}>
@@ -383,29 +434,35 @@ const HotelListPage = ({
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setIsSortFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            styles.filterBtnTextActive
-          ]}>
-            {sortType === 'default' ? '默认排序' : 
-             sortType === 'price_low' ? '低价优先' :
-             sortType === 'price_high' ? '高价优先' : '高星优先'}
+          <Text style={[styles.filterBtnText, styles.filterBtnTextActive]}>
+            {sortType === 'default'
+              ? '默认排序'
+              : sortType === 'price_low'
+              ? '低价优先'
+              : sortType === 'price_high'
+              ? '高价优先'
+              : '高星优先'}
           </Text>
-          <Text style={[
-            styles.filterArrow,
-            isSortFilterVisible && styles.filterArrowUp,
-            styles.filterArrowActive
-          ]}>
+          <Text
+            style={[
+              styles.filterArrow,
+              isSortFilterVisible && styles.filterArrowUp,
+              styles.filterArrowActive,
+            ]}>
             {isSortFilterVisible ? '▲' : '▼'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setIsPriceStarFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterBtnTextActive
-          ]}>
+          <Text
+            style={[
+              styles.filterBtnText,
+              (isPriceStarFilterVisible ||
+                selectedPrice !== null ||
+                selectedStars.length > 0) &&
+                styles.filterBtnTextActive,
+            ]}>
             价格/星级
           </Text>
           {(selectedPrice !== null || selectedStars.length > 0) && (
@@ -415,25 +472,31 @@ const HotelListPage = ({
               </Text>
             </View>
           )}
-          <Text style={[
-            styles.filterArrow,
-            isPriceStarFilterVisible && styles.filterArrowUp,
-            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterArrowActive
-          ]}>
+          <Text
+            style={[
+              styles.filterArrow,
+              isPriceStarFilterVisible && styles.filterArrowUp,
+              (isPriceStarFilterVisible ||
+                selectedPrice !== null ||
+                selectedStars.length > 0) &&
+                styles.filterArrowActive,
+            ]}>
             {isPriceStarFilterVisible ? '▲' : '▼'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setIsAdvancedFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            (isAdvancedFilterVisible || 
-             advancedFilters.hotFilters.length > 0 ||
-             advancedFilters.accommodationTypes.length > 0 ||
-             advancedFilters.hotelFeatures.length > 0 ||
-             advancedFilters.roomFeatures.length > 0) && styles.filterBtnTextActive
-          ]}>
+          <Text
+            style={[
+              styles.filterBtnText,
+              (isAdvancedFilterVisible ||
+                advancedFilters.hotFilters.length > 0 ||
+                advancedFilters.accommodationTypes.length > 0 ||
+                advancedFilters.hotelFeatures.length > 0 ||
+                advancedFilters.roomFeatures.length > 0) &&
+                styles.filterBtnTextActive,
+            ]}>
             筛选
           </Text>
           {(advancedFilters.hotFilters.length > 0 ||
@@ -443,21 +506,23 @@ const HotelListPage = ({
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>
                 {advancedFilters.hotFilters.length +
-                 advancedFilters.accommodationTypes.length +
-                 advancedFilters.hotelFeatures.length +
-                 advancedFilters.roomFeatures.length}
+                  advancedFilters.accommodationTypes.length +
+                  advancedFilters.hotelFeatures.length +
+                  advancedFilters.roomFeatures.length}
               </Text>
             </View>
           )}
-          <Text style={[
-            styles.filterArrow,
-            isAdvancedFilterVisible && styles.filterArrowUp,
-            (isAdvancedFilterVisible || 
-             advancedFilters.hotFilters.length > 0 ||
-             advancedFilters.accommodationTypes.length > 0 ||
-             advancedFilters.hotelFeatures.length > 0 ||
-             advancedFilters.roomFeatures.length > 0) && styles.filterArrowActive
-          ]}>
+          <Text
+            style={[
+              styles.filterArrow,
+              isAdvancedFilterVisible && styles.filterArrowUp,
+              (isAdvancedFilterVisible ||
+                advancedFilters.hotFilters.length > 0 ||
+                advancedFilters.accommodationTypes.length > 0 ||
+                advancedFilters.hotelFeatures.length > 0 ||
+                advancedFilters.roomFeatures.length > 0) &&
+                styles.filterArrowActive,
+            ]}>
             {isAdvancedFilterVisible ? '▲' : '▼'}
           </Text>
         </TouchableOpacity>
@@ -472,7 +537,9 @@ const HotelListPage = ({
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🔍</Text>
-            <Text style={styles.emptyText}>暂无符合条件的酒店，修改条件可重新查询</Text>
+            <Text style={styles.emptyText}>
+              暂无符合条件的酒店，修改条件可重新查询
+            </Text>
           </View>
         )}
         ListFooterComponent={() => {
@@ -497,46 +564,44 @@ const HotelListPage = ({
           onPress={() => setIsModalVisible(false)}>
           <View style={styles.modalContainer}>
             <TouchableOpacity activeOpacity={1}>
-
               <View style={styles.modalContent}>
                 {/* 位置选择 */}
-                  <View style={styles.locationModalContent}>
-                    <LocationSelector
-                      value={location}
-                      onChange={setLocation}
-                      placeholder="输入城市"
-                    />
-                  </View>
-                  <View style={styles.horizontalDivider} />
+                <View style={styles.locationModalContent}>
+                  <LocationSelector
+                    value={location}
+                    onChange={setLocation}
+                    placeholder="输入城市"
+                  />
+                </View>
+                <View style={styles.horizontalDivider} />
 
                 {/* 日期选择 */}
-                  <View style={styles.searchItem}>
-                    <DateSelector
-                      startDate={startDate}
-                      endDate={endDate}
-                      onDateSelect={(start, end) => {
-                        setStartDate(start);
-                        setEndDate(end);
-                      }}
-                    />
-                  </View>
+                <View style={styles.searchItem}>
+                  <DateSelector
+                    startDate={startDate}
+                    endDate={endDate}
+                    onDateSelect={(start, end) => {
+                      setStartDate(start);
+                      setEndDate(end);
+                    }}
+                  />
+                </View>
 
                 {/* 横线分隔符 */}
                 <View style={styles.horizontalDivider} />
-                
-                        {/* 客房和人数统计 */}
-                        <TouchableOpacity
-                          style={styles.searchItem}
-                          onPress={() => setIsGuestModalVisible(true)}>
-                          <Text style={styles.searchLabel}>👥</Text>
-                          <View style={styles.guestInfoContainer}>
-                            <Text style={styles.guestInfoText}>
-                              {rooms}间房 · {adults}成人 · {children}儿童
-                            </Text>
-                            <Text style={styles.dropdownIcon}>▼</Text>
-                          </View>
-                        </TouchableOpacity>
-                
+
+                {/* 客房和人数统计 */}
+                <TouchableOpacity
+                  style={styles.searchItem}
+                  onPress={() => setIsGuestModalVisible(true)}>
+                  <Text style={styles.searchLabel}>👥</Text>
+                  <View style={styles.guestInfoContainer}>
+                    <Text style={styles.guestInfoText}>
+                      {rooms}间房 · {adults}成人 · {children}儿童
+                    </Text>
+                    <Text style={styles.dropdownIcon}>▼</Text>
+                  </View>
+                </TouchableOpacity>
               </View>
 
               <TouchableOpacity
@@ -690,12 +755,24 @@ const HotelListPage = ({
 
               <View style={styles.inputModalFooter}>
                 <TouchableOpacity
-                  style={[styles.inputModalButton, styles.inputModalCancelButton]}
+                  style={[
+                    styles.inputModalButton,
+                    styles.inputModalCancelButton,
+                  ]}
                   onPress={() => setIsInputModalVisible(false)}>
-                  <Text style={[styles.inputModalButtonText, styles.inputModalCancelButtonText]}>取消</Text>
+                  <Text
+                    style={[
+                      styles.inputModalButtonText,
+                      styles.inputModalCancelButtonText,
+                    ]}>
+                    取消
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.inputModalButton, styles.inputModalConfirmButton]}
+                  style={[
+                    styles.inputModalButton,
+                    styles.inputModalConfirmButton,
+                  ]}
                   onPress={() => {
                     const num = parseInt(inputNumber);
                     if (num >= 1 && num <= 999) {
@@ -710,7 +787,13 @@ const HotelListPage = ({
                       setIsNumberModalVisible(false);
                     }
                   }}>
-                  <Text style={[styles.inputModalButtonText, styles.inputModalConfirmButtonText]}>确认</Text>
+                  <Text
+                    style={[
+                      styles.inputModalButtonText,
+                      styles.inputModalConfirmButtonText,
+                    ]}>
+                    确认
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -733,7 +816,7 @@ const HotelListPage = ({
         onFilterChange={(price, stars) => {
           setSelectedPrice(price);
           setSelectedStars(stars);
-          searchHotels({ price, stars });
+          searchHotels({price, stars});
         }}
         currentPrice={selectedPrice}
         currentStars={selectedStars}
@@ -747,12 +830,12 @@ const HotelListPage = ({
       <AdvancedFilter
         visible={isAdvancedFilterVisible}
         onClose={() => setIsAdvancedFilterVisible(false)}
-        onFilterChange={(filters) => {
+        onFilterChange={filters => {
           setAdvancedFilters(filters);
-          searchHotels({ filters });
+          searchHotels({filters});
         }}
         currentFilters={advancedFilters}
-        onRealTimeChange={(filters) => {
+        onRealTimeChange={filters => {
           setAdvancedFilters(filters);
         }}
         onClear={() => {
@@ -763,7 +846,5 @@ const HotelListPage = ({
     </View>
   );
 };
-
-
 
 export default HotelListPage;
