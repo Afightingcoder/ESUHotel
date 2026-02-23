@@ -14,12 +14,11 @@ import type {RouteType} from '../../types';
 import LoadingModal from '../../components/LoadingModal';
 import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
-import GuestSelector from '../../components/GuestSelector';
+import GuestModal from '../../components/GuestModal';
 import {formatDate} from '../../utils/dateUtils';
 import {getHotelList, getHotelDetail} from '../../utils/api';
 import {amenitiesMap} from '../../utils/mappings';
 import {styles} from './styles';
-// 导入react-native-amap-geolocation库
 import {init} from 'react-native-amap-geolocation';
 
 const HotelSearchPage = ({
@@ -69,16 +68,6 @@ const HotelSearchPage = ({
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
   // 选择弹窗状态
   const [isGuestModalVisible, setIsGuestModalVisible] =
-    useState<boolean>(false);
-  // 数字选择弹窗状态
-  const [isNumberModalVisible, setIsNumberModalVisible] =
-    useState<boolean>(false);
-  const [currentSelectType] = useState<'rooms' | 'adults' | 'children' | null>(
-    null,
-  );
-  // 输入数字状态
-  const [inputNumber, setInputNumber] = useState<string>('');
-  const [isInputModalVisible, setIsInputModalVisible] =
     useState<boolean>(false);
   // 筛选弹窗状态
   const [isFilterModalVisible, setIsFilterModalVisible] =
@@ -393,180 +382,17 @@ const HotelSearchPage = ({
       <LoadingModal visible={loading} message="紧急定位ing~" />
 
       {/* 选择客房和入住人数弹窗 */}
-      <Modal
+      <GuestModal
         visible={isGuestModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsGuestModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsGuestModalVisible(false)}>
-          <View style={styles.guestModalContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>选择客房和入住人数</Text>
-                <TouchableOpacity onPress={() => setIsGuestModalVisible(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalContent}>
-                <GuestSelector
-                  rooms={rooms}
-                  adults={adults}
-                  children={children}
-                  onRoomsChange={setRooms}
-                  onAdultsChange={setAdults}
-                  onChildrenChange={setChildren}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={() => setIsGuestModalVisible(false)}>
-                <Text style={styles.confirmButtonText}>确认</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* 数字选择弹窗 */}
-      <Modal
-        visible={isNumberModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsNumberModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsNumberModalVisible(false)}>
-          <View style={styles.numberModalContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {currentSelectType === 'rooms'
-                    ? '选择房间数量'
-                    : currentSelectType === 'adults'
-                    ? '选择成人数量'
-                    : '选择儿童数量'}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setIsNumberModalVisible(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.numberGrid}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                  <TouchableOpacity
-                    key={num}
-                    style={styles.numberGridItem}
-                    onPress={() => {
-                      if (currentSelectType === 'rooms') {
-                        setRooms(num);
-                      } else if (currentSelectType === 'adults') {
-                        setAdults(num);
-                      } else if (currentSelectType === 'children') {
-                        setChildren(num);
-                      }
-                      setIsNumberModalVisible(false);
-                    }}>
-                    <Text style={styles.numberGridItemText}>{num}</Text>
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                  style={styles.numberGridItem}
-                  onPress={() => {
-                    // 显示输入弹窗
-                    setInputNumber('');
-                    setIsInputModalVisible(true);
-                  }}>
-                  <Text style={styles.numberGridItemText}>更多</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* 输入数字弹窗 */}
-      <Modal
-        visible={isInputModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsInputModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsInputModalVisible(false)}>
-          <View style={styles.inputModalContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {currentSelectType === 'rooms'
-                    ? '输入房间数量'
-                    : currentSelectType === 'adults'
-                    ? '输入成人数量'
-                    : '输入儿童数量'}
-                </Text>
-                <TouchableOpacity onPress={() => setIsInputModalVisible(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.inputModalContent}>
-                <TextInput
-                  style={styles.inputField}
-                  value={inputNumber}
-                  onChangeText={setInputNumber}
-                  placeholder="请输入数量"
-                  keyboardType="numeric"
-                  autoFocus
-                />
-                <Text style={styles.inputHint}>最多输入30</Text>
-              </View>
-
-              <View style={styles.inputModalFooter}>
-                <TouchableOpacity
-                  style={[
-                    styles.inputModalButton,
-                    styles.inputModalCancelButton,
-                  ]}
-                  onPress={() => setIsInputModalVisible(false)}>
-                  <Text style={styles.inputModalCancelButtonText}>取消</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.inputModalButton,
-                    styles.inputModalConfirmButton,
-                  ]}
-                  onPress={() => {
-                    const value = parseInt(inputNumber, 10);
-                    if (value > 30) {
-                      Alert.alert('提示', '最多输入30');
-                      return;
-                    }
-                    if (value > 0) {
-                      if (currentSelectType === 'rooms') {
-                        setRooms(value);
-                      } else if (currentSelectType === 'adults') {
-                        setAdults(value);
-                      } else if (currentSelectType === 'children') {
-                        setChildren(value);
-                      }
-                      setIsInputModalVisible(false);
-                      setIsNumberModalVisible(false);
-                    }
-                  }}>
-                  <Text style={styles.inputModalConfirmButtonText}>确认</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setIsGuestModalVisible(false)}
+        onConfirm={() => {}}
+        rooms={rooms}
+        adults={adults}
+        children={children}
+        onRoomsChange={setRooms}
+        onAdultsChange={setAdults}
+        onChildrenChange={setChildren}
+      />
 
       {/* 筛选弹窗 */}
       <Modal

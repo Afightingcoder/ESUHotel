@@ -7,11 +7,10 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  Modal,
   Dimensions,
 } from 'react-native';
 import Calendar from '../components/Calendar';
-import GuestSelector from '../components/GuestSelector';
+import GuestModal from '../components/GuestModal';
 import {amenitiesMap, roomTagsMap, bedTypeMap} from '../utils/mappings';
 import {getHotelDetail} from '../utils/api';
 
@@ -383,47 +382,17 @@ const HotelDetailPage = ({
       </View>
 
       {/* 选择客房和入住人数弹窗 */}
-      <Modal
+      <GuestModal
         visible={isGuestModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsGuestModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalBottom}
-          activeOpacity={1}
-          onPress={() => setIsGuestModalVisible(false)}>
-          <View style={styles.guestModalContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>选择客房和入住人数</Text>
-                <TouchableOpacity onPress={() => setIsGuestModalVisible(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalContent}>
-                <GuestSelector
-                  rooms={rooms}
-                  adults={adults}
-                  children={children}
-                  onRoomsChange={setRooms}
-                  onAdultsChange={setAdults}
-                  onChildrenChange={setChildren}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={() => {
-                  setIsGuestModalVisible(false);
-                  refreshHotelDetail();
-                }}>
-                <Text style={styles.confirmButtonText}>确认</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setIsGuestModalVisible(false)}
+        onConfirm={refreshHotelDetail}
+        rooms={rooms}
+        adults={adults}
+        children={children}
+        onRoomsChange={setRooms}
+        onAdultsChange={setAdults}
+        onChildrenChange={setChildren}
+      />
     </ScrollView>
   );
 };
@@ -709,53 +678,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ff4d4f',
     marginTop: 4,
-  },
-  // 弹窗样式
-  modalBottom: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  guestModalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 30,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  closeButton: {
-    fontSize: 20,
-    color: '#999',
-    padding: 4,
-  },
-  modalContent: {
-    padding: 16,
-  },
-  confirmButton: {
-    backgroundColor: '#1890ff',
-    borderRadius: 8,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
   },
 });
 

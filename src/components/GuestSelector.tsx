@@ -8,6 +8,7 @@ interface GuestSelectorProps {
   onRoomsChange: (value: number) => void;
   onAdultsChange: (value: number) => void;
   onChildrenChange: (value: number) => void;
+  onNumberPress: (type: 'rooms' | 'adults' | 'children') => void;
 }
 
 const GuestSelector: React.FC<GuestSelectorProps> = ({
@@ -17,6 +18,7 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
   onRoomsChange,
   onAdultsChange,
   onChildrenChange,
+  onNumberPress,
 }) => {
   return (
     <View style={styles.container}>
@@ -39,9 +41,11 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
               -
             </Text>
           </TouchableOpacity>
-          <View style={styles.numberValue}>
+          <TouchableOpacity 
+            style={styles.numberValue}
+            onPress={() => onNumberPress('rooms')}>
             <Text style={styles.numberValueText}>{rooms}</Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.numberButton}
             onPress={() => onRoomsChange(rooms + 1)}>
@@ -69,9 +73,11 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
               -
             </Text>
           </TouchableOpacity>
-          <View style={styles.numberValue}>
+          <TouchableOpacity 
+            style={styles.numberValue}
+            onPress={() => onNumberPress('adults')}>
             <Text style={styles.numberValueText}>{adults}</Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.numberButton}
             onPress={() => onAdultsChange(adults + 1)}>
@@ -99,9 +105,11 @@ const GuestSelector: React.FC<GuestSelectorProps> = ({
               -
             </Text>
           </TouchableOpacity>
-          <View style={styles.numberValue}>
+          <TouchableOpacity 
+            style={styles.numberValue}
+            onPress={() => onNumberPress('children')}>
             <Text style={styles.numberValueText}>{children}</Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.numberButton}
             onPress={() => onChildrenChange(children + 1)}>
