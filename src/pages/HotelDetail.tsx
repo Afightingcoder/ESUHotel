@@ -138,17 +138,24 @@ const HotelDetailPage = ({
       <View style={styles.detailHeader}>
         <TouchableOpacity 
           onPress={() => {
-            // 返回列表页时传递更新后的数据
             navigateBack({ 
-              updatedData: {
-                startDate,
-                endDate,
-                rooms,
-                adults,
-                children,
-                hotels: routeParams?.hotels || [],
-                location: routeParams?.location || ''
-              }
+              startDate,
+              endDate,
+              rooms,
+              adults,
+              children,
+              hotels: routeParams?.hotels || [],
+              location: routeParams?.location || '',
+              keyword: routeParams?.keyword || '',
+              selectedPrice: routeParams?.selectedPrice,
+              selectedStars: routeParams?.selectedStars || [],
+              advancedFilters: routeParams?.advancedFilters || {
+                hotFilters: [],
+                accommodationTypes: [],
+                hotelFeatures: [],
+                roomFeatures: [],
+              },
+              sortType: routeParams?.sortType || 'default',
             });
           }} 
           style={styles.backBtn}
@@ -439,11 +446,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   facilityText: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    fontSize: 14,
+    color: '#1890ff',
+    backgroundColor: '#e6f7ff',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 4,
   },
   // 日历Banner样式

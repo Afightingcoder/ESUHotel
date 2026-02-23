@@ -87,6 +87,24 @@ const HotelListPage = ({
     return parseKeywordFilters(keyword);
   });
 
+  // 处理从详情页返回时的数据更新
+  React.useEffect(() => {
+    if (routeParams) {
+      if (routeParams.keyword !== undefined) setSearchKeyword(routeParams.keyword);
+      if (routeParams.selectedPrice !== undefined) setSelectedPrice(routeParams.selectedPrice);
+      if (routeParams.selectedStars) setSelectedStars(routeParams.selectedStars);
+      if (routeParams.advancedFilters) setAdvancedFilters(routeParams.advancedFilters);
+      if (routeParams.sortType) setSortType(routeParams.sortType);
+      if (routeParams.startDate) setStartDate(routeParams.startDate);
+      if (routeParams.endDate) setEndDate(routeParams.endDate);
+      if (routeParams.rooms) setRooms(routeParams.rooms);
+      if (routeParams.adults) setAdults(routeParams.adults);
+      if (routeParams.children) setChildren(routeParams.children);
+      if (routeParams.hotels) setHotels(routeParams.hotels);
+      if (routeParams.location) setLocation(routeParams.location);
+    }
+  }, [routeParams]);
+
   // 弹窗状态
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   // 客房和人数选择弹窗状态
@@ -217,15 +235,41 @@ const HotelListPage = ({
   const renderHotelItem = ({item}: {item: HotelType}) => {
     const handlePress = async () => {
       try {
-        // 请求酒店详情API
         const hotelDetail = await getHotelDetail(`${item.id}`);
-        console.log('===详情', hotelDetail.data.roomTypes);
-        // 导航到详情页并传递酒店详情数据，同时保留hotels数据
-        navigateTo('detail', {hotelId: item.id, hotelDetail: hotelDetail.data, startDate, endDate, rooms, adults, children, hotels, location});
+        console.log('===单个酒店详情', hotelDetail.data.amenities);
+        navigateTo('detail', {
+          hotelId: item.id,
+          hotelDetail: hotelDetail.data,
+          startDate,
+          endDate,
+          rooms,
+          adults,
+          children,
+          hotels,
+          location,
+          keyword: searchKeyword,
+          selectedPrice,
+          selectedStars,
+          advancedFilters,
+          sortType,
+        });
       } catch (error) {
-        // 网络错误，使用现有的item数据作为后备
         console.error('网络请求错误:', error);
-        navigateTo('detail', {hotelId: item.id, startDate, endDate, rooms, adults, children, hotels});
+        navigateTo('detail', {
+          hotelId: item.id,
+          startDate,
+          endDate,
+          rooms,
+          adults,
+          children,
+          hotels,
+          location,
+          keyword: searchKeyword,
+          selectedPrice,
+          selectedStars,
+          advancedFilters,
+          sortType,
+        });
       }
     };
 
