@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   Modal,
+  Animated,
 } from 'react-native';
 import type {RouteType} from '../../types';
 import LoadingModal from '../../components/LoadingModal';
@@ -22,6 +23,46 @@ import {amenitiesMap} from '../../utils/mappings';
 import {styles} from './styles';
 import {init} from 'react-native-amap-geolocation';
 
+// 骨架屏组件 - 用于在加载banner数据时显示占位动画
+const SkeletonBanner = () => {
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // 创建循环动画效果，实现闪烁的加载状态
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(animatedValue, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animatedValue, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // 插值透明度值，从0.3到0.8循环变化
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.8],
+  });
+
+  return (
+    <View style={styles.bannerContainer}>
+      <Animated.View style={[styles.bannerSkeleton, {opacity}]}>
+        <View style={styles.bannerSkeletonContent}>
+          <View style={styles.bannerSkeletonTitle} />
+          <View style={styles.bannerSkeletonSubtitle} />
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
+
 const HotelSearchPage = ({
   navigateTo,
   routeParams,
@@ -32,10 +73,9 @@ const HotelSearchPage = ({
   const [location, setLocation] = useState<string>(routeParams?.location || '上海');
   const [keyword, setKeyword] = useState<string>(routeParams?.keyword || '');
   
-  // Banner酒店数据
   const [bannerHotel, setBannerHotel] = useState<any>(null);
+  const [bannerLoading, setBannerLoading] = useState<boolean>(true);
 
-  // 计算今天和明天的日期
   const getTodayDate = () => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
@@ -61,24 +101,17 @@ const HotelSearchPage = ({
     star: [],
     priceRange: [],
   });
-  // 加载弹窗状态
   const [loading] = useState<boolean>(false);
-  // 客房和人数状态
   const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
   const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
-  // 选择弹窗状态
   const [isGuestModalVisible, setIsGuestModalVisible] =
     useState<boolean>(false);
-  // 筛选弹窗状态
   const [isFilterModalVisible, setIsFilterModalVisible] =
     useState<boolean>(false);
-  // 价格区间选择状态（单选）
   const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
-  // 星级选择状态（多选）
   const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
 
-  // 快捷标签数据
   const quickTags = [
     {id: 'tag_01', name: '亲子友好'},
     {id: 'tag_02', name: '豪华酒店'},
@@ -88,24 +121,20 @@ const HotelSearchPage = ({
     {id: 'tag_06', name: '江景房'},
   ];
 
-  // 初始化react-native-amap-geolocation库
   useEffect(() => {
-    // 初始化高德地图定位
     if (Platform.OS === 'android') {
-      // Android端需要在代码中设置API key
       init({
         ios: '',
         android: '81583f4cae74715f049663264b247f14',
       });
     }
-    // 组件卸载时清理
     return () => {};
   }, []);
 
-  // 获取banner酒店数据（动态获取酒店列表第一个）
   useEffect(() => {
     const fetchBannerHotel = async () => {
       try {
+        setBannerLoading(true);
         const response = await getHotelList();
         if (response && response.length > 0) {
           const firstHotel = response[0];
@@ -113,6 +142,8 @@ const HotelSearchPage = ({
             const detailResponse = await getHotelDetail(firstHotel.id);
             if (detailResponse && detailResponse.data) {
               setBannerHotel(detailResponse.data);
+            } else {
+              setBannerHotel(firstHotel);
             }
           } else {
             setBannerHotel(firstHotel);
@@ -120,13 +151,14 @@ const HotelSearchPage = ({
         }
       } catch (error) {
         console.error('获取banner酒店数据失败:', error);
+      } finally {
+        setBannerLoading(false);
       }
     };
     
     fetchBannerHotel();
   }, []);
 
-  // 监听routeParams变化，更新所有状态
   useEffect(() => {
     if (routeParams) {
       if (routeParams.location) setLocation(routeParams.location);
@@ -141,16 +173,13 @@ const HotelSearchPage = ({
     }
   }, [routeParams]);
 
-  // 处理日期选择
   const handleDateSelect = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   };
 
-  // 提交查询
   const handleSearch = async () => {
     try {
-      // 构建搜索参数
       const searchParams: any = {
         location,
         keyword,
@@ -160,7 +189,6 @@ const HotelSearchPage = ({
         guests: adults + children,
       };
       
-      // 处理价格区间
       if (selectedPrice !== null) {
         const priceRanges: Record<number, {min?: number; max?: number}> = {
           200: {max: 200},
@@ -179,18 +207,15 @@ const HotelSearchPage = ({
         }
       }
       
-      // 处理星级
       if (selectedStars.length > 0) {
         searchParams.stars = selectedStars;
       }
       
       console.log('搜索参数:', searchParams);
       
-      // 调用API获取酒店列表
       const hotelList = await getHotelList(searchParams);
       console.log('获取酒店列表成功:', hotelList);
       
-      // 导航到列表页
       navigateTo('list', {
         location,
         keyword,
@@ -212,8 +237,9 @@ const HotelSearchPage = ({
 
   return (
     <ScrollView style={styles.pageContainer}>
-      {/* 顶部Banner */}
-      {bannerHotel && (
+      {bannerLoading ? (
+        <SkeletonBanner />
+      ) : bannerHotel ? (
         <TouchableOpacity
           style={styles.bannerContainer}
           onPress={() => navigateTo('detail', {
@@ -241,20 +267,14 @@ const HotelSearchPage = ({
             </View>
           </ImageBackground>
         </TouchableOpacity>
-      )}
+      ) : null}
 
-      {/* 核心查询区域 */}
       <View style={styles.searchContainer}>
-        {/* 当前地点 */}
         <View style={styles.locationSearchItem}>
           <View style={styles.locationContainer}>
             <View style={styles.floatingLabelInputContainer}>
               {location ? <Text style={styles.floatingLabel}>位置</Text> : null}
-              <View
-                style={[
-                  styles.searchInput,
-                  location && styles.searchInputWithValue,
-                ]}>
+              <View style={styles.searchInputWrapper}>
                 <LocationSelector
                   value={location}
                   onChange={setLocation}
@@ -263,11 +283,9 @@ const HotelSearchPage = ({
               </View>
             </View>
           </View>
-          {/* 横线分隔符 */}
           <View style={styles.horizontalDivider} />
         </View>
 
-        {/* 关键字搜索 */}
         <View style={styles.searchItem}>
           <Text style={styles.searchLabel}>🔍</Text>
           <View style={styles.floatingLabelInputContainer}>
@@ -277,7 +295,7 @@ const HotelSearchPage = ({
             <TextInput
               style={[
                 styles.searchInput,
-                keyword && styles.searchInputWithValue,
+                keyword ? styles.searchInputWithText : null,
               ]}
               value={keyword}
               onChangeText={setKeyword}
@@ -295,10 +313,8 @@ const HotelSearchPage = ({
             ) : null}
           </View>
         </View>
-        {/* 横线分隔符 */}
         <View style={styles.horizontalDivider} />
 
-        {/* 日期选择 */}
         <View style={styles.searchItem}>
           <DateSelector
             startDate={startDate}
@@ -306,10 +322,8 @@ const HotelSearchPage = ({
             onDateSelect={handleDateSelect}
           />
         </View>
-        {/* 横线分隔符 */}
         <View style={styles.horizontalDivider} />
 
-        {/* 客房和人数统计 */}
         <TouchableOpacity
           style={styles.searchItem}
           onPress={() => setIsGuestModalVisible(true)}>
@@ -321,10 +335,8 @@ const HotelSearchPage = ({
             <Text style={styles.dropdownIcon}>▼</Text>
           </View>
         </TouchableOpacity>
-        {/* 横线分隔符 */}
         <View style={styles.horizontalDivider} />
 
-        {/* 筛选条件（星级+价格） */}
         <TouchableOpacity
           style={styles.searchItem}
           onPress={() => setIsFilterModalVisible(true)}>
@@ -360,10 +372,8 @@ const HotelSearchPage = ({
             <Text style={styles.dropdownIcon}>▼</Text>
           </View>
         </TouchableOpacity>
-        {/* 横线分隔符 */}
         <View style={styles.horizontalDivider} />
 
-        {/* 快捷标签 */}
         <View style={styles.tagsContainer}>
           <View style={styles.tagsContent}>
             {quickTags.map(tag => (
@@ -386,16 +396,13 @@ const HotelSearchPage = ({
           </View>
         </View>
 
-        {/* 查询按钮 */}
         <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>
           <Text style={styles.searchBtnText}>查询酒店</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 加载弹窗 */}
       <LoadingModal visible={loading} message="紧急定位ing~" />
 
-      {/* 选择客房和入住人数弹窗 */}
       <GuestModal
         visible={isGuestModalVisible}
         onClose={() => setIsGuestModalVisible(false)}
@@ -408,7 +415,6 @@ const HotelSearchPage = ({
         onChildrenChange={setChildren}
       />
 
-      {/* 筛选弹窗 */}
       <Modal
         visible={isFilterModalVisible}
         transparent={true}
@@ -454,7 +460,5 @@ const HotelSearchPage = ({
     </ScrollView>
   );
 };
-
-
 
 export default HotelSearchPage;

@@ -33,6 +33,29 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
   },
+  // Banner骨架屏样式
+  bannerSkeleton: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'flex-end',
+    padding: 16,
+  },
+  bannerSkeletonContent: {
+    gap: 8,
+  },
+  bannerSkeletonTitle: {
+    width: 150,
+    height: 20,
+    backgroundColor: '#ccc',
+    borderRadius: 4,
+  },
+  bannerSkeletonSubtitle: {
+    width: 200,
+    height: 14,
+    backgroundColor: '#ccc',
+    borderRadius: 4,
+  },
   // 搜索区域样式
   searchContainer: {
     padding: 16,
@@ -63,6 +86,16 @@ export const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 12,
     fontSize: 18,
+  },
+  searchInputWrapper: {
+    flex: 1,
+    height: 44,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+  searchInputWithText: {
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   verticalDivider: {
     width: 0.5,
@@ -211,10 +244,6 @@ export const styles = StyleSheet.create({
     color: '#999',
     backgroundColor: '#fff',
     paddingHorizontal: 4,
-  },
-  searchInputWithValue: {
-    paddingTop: 16,
-    paddingBottom: 8,
   },
   // 清除按钮样式
   clearButton: {
