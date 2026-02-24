@@ -224,6 +224,10 @@ const HotelSearchPage = ({
             rooms,
             adults,
             children,
+            location,
+            keyword,
+            selectedPrice,
+            selectedStars,
             fromRoute: 'search',
           })}>
           <ImageBackground

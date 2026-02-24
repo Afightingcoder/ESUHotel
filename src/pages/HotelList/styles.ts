@@ -441,10 +441,6 @@ export const styles = StyleSheet.create({
     color: '#999',
     padding: 4,
   },
-  modalContent: {
-    padding: 16,
-  },
-  // 数字选择弹窗样式
   numberGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
