@@ -257,7 +257,7 @@ const HotelSearchPage = ({
             fromRoute: 'search',
           })}>
           <ImageBackground
-            source={{uri: bannerHotel.photos?.[0]?.url || 'https://picsum.photos/id/1031/800/400'}}
+            source={{uri: bannerHotel.photos?.[0]?.url || 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}}
             style={styles.bannerImage}>
             <View style={styles.bannerOverlay}>
               <Text style={styles.bannerTitle}>{bannerHotel.name}</Text>

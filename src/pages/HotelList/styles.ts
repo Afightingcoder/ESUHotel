@@ -47,8 +47,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   backBtn: {
-    // width: 60,
-    marginRight: 8,
+    marginRight: 2,
+  },
+  backIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
   backBtnText: {
     fontSize: 14,

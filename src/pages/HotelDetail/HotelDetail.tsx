@@ -84,7 +84,7 @@ const HotelDetailPage = ({
       ? currentHotel.photos
           .map((photo: any) => photo?.url)
           .filter((url: string) => url && url.trim())
-      : ['https://picsum.photos/id/1031/800/400'];
+      : ['https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'];
     
     console.log('----轮播图数据更新---', data.length, '张图片');
     return data;
@@ -178,7 +178,10 @@ const HotelDetailPage = ({
           }} 
           style={styles.backBtn}
         >
-          <Text style={styles.backBtnText}>←</Text>
+          <Image
+            source={{uri: 'https://img.cdn1.vip/i/699dc8eabcd80_1771948266.png'}}
+            style={styles.backIcon}
+          />
         </TouchableOpacity>
         <Text style={styles.detailTitle}>{currentHotel.name}</Text>
         <View style={styles.emptyView} />
@@ -266,12 +269,12 @@ const HotelDetailPage = ({
                       <Image 
                         source={{uri: roomType.photos[0].url}} 
                         style={styles.roomTypeImage}
-                        defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
+                        defaultSource={{ uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp' }}
                         onError={() => console.log('房型图片加载失败：', roomType.photos[0].url)}
                       />
                     ) : (
                       <Image 
-                        source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
+                        source={{uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}} 
                         style={styles.roomTypeImage}
                       />
                     )}
@@ -329,11 +332,11 @@ const HotelDetailPage = ({
                       <Image 
                         source={{uri: roomType.photos[0].url}} 
                         style={styles.roomTypeImage}
-                        defaultSource={{ uri: 'https://picsum.photos/id/1031/800/400' }}
+                        defaultSource={{ uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp' }}
                       />
                     ) : (
                       <Image 
-                        source={{uri: 'https://picsum.photos/id/1031/800/400'}} 
+                        source={{uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}} 
                         style={styles.roomTypeImage}
                       />
                     )}

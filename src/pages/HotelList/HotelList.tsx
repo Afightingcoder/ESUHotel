@@ -47,7 +47,7 @@ const HotelItem = memo(({item, onPress, rooms, nights}: HotelItemProps) => {
       <Image 
         source={{uri: item.photos[1].url}} 
         style={styles.hotelImage}
-        defaultSource={{uri: 'https://picsum.photos/id/1031/200/200'}}
+        defaultSource={{uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}}
       />
       <View style={styles.hotelInfo}>
         <View style={styles.hotelNameContainer}>
@@ -397,7 +397,10 @@ const HotelListPage = ({
           <TouchableOpacity
             style={styles.backBtn}
             onPress={handleGoBack}>
-            <Text style={styles.backBtnText}>←</Text>
+            <Image
+              source={{uri: 'https://img.cdn1.vip/i/699dc8eabcd80_1771948266.png'}}
+              style={styles.backIcon}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerInfoItem}
