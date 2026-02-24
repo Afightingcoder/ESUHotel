@@ -183,8 +183,6 @@ export const styles = StyleSheet.create({
   hotelStar: {
     fontSize: 12,
     color: '#ff9500',
-    borderWidth: 1,
-    borderColor: '#ff9500',
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,

@@ -18,6 +18,7 @@ import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
 import {formatDate, calculateNights} from '../../utils/dateUtils';
 import {styles} from './styles';
+import HotelListSkeleton from './HotelListSkeleton';
 import {getHotelDetail, getHotelList} from '../../utils/api';
 import {amenitiesMap, removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
 
@@ -89,6 +90,7 @@ const HotelListPage = ({
   const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
 
   React.useEffect(() => {
@@ -192,6 +194,7 @@ const HotelListPage = ({
     stars?: number[];
     filters?: typeof advancedFilters;
   }) => {
+    setIsLoading(true);
     try {
       const searchParams: any = {
         location,
@@ -256,6 +259,8 @@ const HotelListPage = ({
       }
     } catch (error) {
       console.error('获取酒店列表失败:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, [location, searchKeyword, startDate, endDate, rooms, adults, children, selectedPrice, selectedStars, advancedFilters]);
 
@@ -514,24 +519,28 @@ const HotelListPage = ({
       </View>
       
       {/* 酒店列表 */}
-      <FlatList
-        ref={flatListRef}
-        data={sortedHotels}
-        renderItem={renderHotelItem}
-        keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={renderListEmpty}
-        ListFooterComponent={renderListFooter}
-        contentContainerStyle={styles.listContent}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />
+      {isLoading ? (
+        <HotelListSkeleton />
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={sortedHotels}
+          renderItem={renderHotelItem}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={renderListEmpty}
+          ListFooterComponent={renderListFooter}
+          contentContainerStyle={styles.listContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        />
+      )}
 
       {/* 回到顶部按钮 */}
       {showScrollTop && (
