@@ -1,18 +1,6 @@
-import React, {useState, useMemo, useCallback, memo, useRef} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Image,
-  Modal,
-  Animated,
-} from 'react-native';
+import React, {useState, useMemo, useCallback, useRef} from 'react';
+import {View, Text, FlatList} from 'react-native';
 import type {RouteType, HotelType} from '../../types';
-import LocationSelector from '../../components/LocationSelector';
-import DateSelector from '../../components/DateSelector';
-import GuestModal from '../../components/GuestModal';
 import SortFilter from '../../components/SortFilter';
 import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
@@ -20,60 +8,15 @@ import {formatDate, calculateNights} from '../../utils/dateUtils';
 import {styles} from './styles';
 import HotelListSkeleton from './HotelListSkeleton';
 import {getHotelDetail, getHotelList} from '../../utils/api';
-import {amenitiesMap, removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
+import {removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
+import HotelItem from './HotelItem';
+import FilterBar from './FilterBar';
+import ListHeader from './ListHeader';
+import ScrollToTop from './ScrollToTop';
+import SearchModal from './SearchModal';
+import {sortHotels, buildSearchParams} from './utils';
 
 const ITEM_HEIGHT = 140;
-
-interface HotelItemProps {
-  item: HotelType;
-  onPress: (item: HotelType) => void;
-  rooms: number;
-  nights: number;
-}
-
-const HotelItem = memo(({item, onPress, rooms, nights}: HotelItemProps) => {
-  const handlePress = useCallback(() => {
-    onPress(item);
-  }, [item, onPress]);
-
-  const roomTypes = item.roomTypes as any;
-  const price = roomTypes?.available?.[0]?.price || roomTypes?.[0]?.price || '暂无';
-
-  return (
-    <TouchableOpacity
-      style={styles.hotelItem}
-      onPress={handlePress}
-      activeOpacity={0.8}>
-      <Image 
-        source={{uri: item.photos[1].url}} 
-        style={styles.hotelImage}
-        defaultSource={{uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}}
-      />
-      <View style={styles.hotelInfo}>
-        <View style={styles.hotelNameContainer}>
-          <Text style={styles.hotelName} numberOfLines={1}>{item.name}</Text>
-          <Text style={styles.hotelStar}>{'🌟'.repeat(item.star)}</Text>
-        </View>
-        <Text style={styles.hotelAddress} numberOfLines={1}>{item.address}</Text>
-        <View style={styles.hotelTags}>
-          {item.amenities && item.amenities.length > 0 && item.amenities.slice(0, 5).map((amenity: string, index: number) => (
-            <Text key={`${amenity}_${index}`} style={styles.hotelTagText}>
-              {amenitiesMap[amenity] || amenity}
-            </Text>
-          ))}
-        </View>
-        <View style={styles.hotelPriceContainer}>
-          <Text style={styles.hotelRoomNight}>{rooms}间·{nights}晚</Text>
-          <View style={styles.priceWrapper}>
-            <Text style={styles.hotelPriceSymbol}>¥</Text>
-            <Text style={styles.hotelPrice}>{price}</Text>
-            <Text style={styles.hotelPriceDesc}>起/晚</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-});
 
 const HotelListPage = ({
   navigateTo,
@@ -154,39 +97,10 @@ const HotelListPage = ({
   const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
 
   const handleLoadMore = useCallback(() => {
-    // 预留分页加载逻辑
   }, []);
 
   const sortedHotels = useMemo(() => {
-    const result = [...hotels];
-    
-    switch (sortType) {
-      case 'price_low':
-        result.sort((a, b) => {
-          const aRoomTypes = a.roomTypes as any;
-          const bRoomTypes = b.roomTypes as any;
-          const priceA = aRoomTypes?.available?.[0]?.price || aRoomTypes?.[0]?.price || 0;
-          const priceB = bRoomTypes?.available?.[0]?.price || bRoomTypes?.[0]?.price || 0;
-          return priceA - priceB;
-        });
-        break;
-      case 'price_high':
-        result.sort((a, b) => {
-          const aRoomTypes = a.roomTypes as any;
-          const bRoomTypes = b.roomTypes as any;
-          const priceA = aRoomTypes?.available?.[0]?.price || aRoomTypes?.[0]?.price || 0;
-          const priceB = bRoomTypes?.available?.[0]?.price || bRoomTypes?.[0]?.price || 0;
-          return priceB - priceA;
-        });
-        break;
-      case 'star_high':
-        result.sort((a, b) => (b.star || 0) - (a.star || 0));
-        break;
-      default:
-        break;
-    }
-    
-    return result;
+    return sortHotels(hotels, sortType);
   }, [hotels, sortType]);
 
   const searchHotels = useCallback(async (params?: {
@@ -196,58 +110,19 @@ const HotelListPage = ({
   }) => {
     setIsLoading(true);
     try {
-      const searchParams: any = {
+      const searchParams = buildSearchParams(
         location,
-        keyword: searchKeyword,
-        startDate: formatDate(startDate),
-        endDate: formatDate(endDate),
+        searchKeyword,
+        startDate,
+        endDate,
         rooms,
-        guests: adults + children,
-      };
-
-      const priceToUse = params?.price !== undefined ? params.price : selectedPrice;
-      if (priceToUse !== null) {
-        const priceRanges: Record<number, {min?: number; max?: number}> = {
-          200: {max: 200},
-          350: {min: 200, max: 350},
-          400: {min: 350, max: 400},
-          500: {min: 400, max: 500},
-          900: {min: 500, max: 900},
-          1400: {min: 900, max: 1400},
-          1401: {min: 1400},
-        };
-        
-        const priceRange = priceRanges[priceToUse];
-        if (priceRange) {
-          if (priceRange.min) searchParams.minPrice = priceRange.min;
-          if (priceRange.max) searchParams.maxPrice = priceRange.max;
-        }
-      }
-
-      const starsToUse = params?.stars || selectedStars;
-      if (starsToUse.length > 0) {
-        searchParams.stars = starsToUse;
-      }
-
-      const filtersToUse = params?.filters || advancedFilters;
-      const filterKeywords: string[] = [];
-      
-      if (filtersToUse.hotFilters.length > 0) {
-        filterKeywords.push(...filtersToUse.hotFilters);
-      }
-      if (filtersToUse.accommodationTypes.length > 0) {
-        filterKeywords.push(...filtersToUse.accommodationTypes);
-      }
-      if (filtersToUse.hotelFeatures.length > 0) {
-        filterKeywords.push(...filtersToUse.hotelFeatures);
-      }
-      if (filtersToUse.roomFeatures.length > 0) {
-        filterKeywords.push(...filtersToUse.roomFeatures);
-      }
-      
-      if (filterKeywords.length > 0) {
-        searchParams.keyword = searchKeyword ? `${searchKeyword} ${filterKeywords.join(' ')}` : filterKeywords.join(' ');
-      }
+        adults,
+        children,
+        params?.price !== undefined ? params.price : selectedPrice,
+        params?.stars || selectedStars,
+        params?.filters || advancedFilters,
+        formatDate
+      );
 
       console.log('搜索参数:', searchParams);
       
@@ -391,139 +266,33 @@ const HotelListPage = ({
 
   return (
     <View style={styles.pageContainer}>
-      {/* 顶部核心筛选头 */}
-      <View style={styles.listFilterHeader}>
-        <View style={styles.headerLeftContent}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={handleGoBack}>
-            <Image
-              source={{uri: 'https://img.cdn1.vip/i/699dc8eabcd80_1771948266.png'}}
-              style={styles.backIcon}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerInfoItem}
-            onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.headerInfoText} numberOfLines={2}>{location||'暂无位置信息'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerInfoItem}
-            onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.headerInfoText} numberOfLines={2}>{`住 ${formatDate(startDate)} 离 ${formatDate(endDate)}`}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerInfoItem}
-            onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.headerInfoText}>
-              {rooms}间{adults+children}人
-            </Text>
-          </TouchableOpacity>
-          {/* 搜索框 */}
-          <View style={styles.searchBoxContainer}>
-            <View style={styles.searchInputWrapper}>
-              <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput
-                style={styles.searchBox}
-                value={searchKeyword}
-                onChangeText={setSearchKeyword}
-                placeholder="酒店/品牌"
-                placeholderTextColor="#999"
-                autoCapitalize="none"
-                keyboardType="default"
-                autoCorrect={false}
-                returnKeyType="search"
-                onSubmitEditing={searchHotels}
-              />
-            </View>
-          </View>
-        </View>
-      </View>
-      <View style={styles.filterBar}>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setIsSortFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            styles.filterBtnTextActive
-          ]}>
-            {sortType === 'default' ? '默认排序' : 
-             sortType === 'price_low' ? '低价优先' :
-             sortType === 'price_high' ? '高价优先' : '高星优先'}
-          </Text>
-          <Text style={[
-            styles.filterArrow,
-            isSortFilterVisible && styles.filterArrowUp,
-            styles.filterArrowActive
-          ]}>
-            {isSortFilterVisible ? '▲' : '▼'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setIsPriceStarFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterBtnTextActive
-          ]}>
-            价格/星级
-          </Text>
-          {(selectedPrice !== null || selectedStars.length > 0) && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>
-                {(selectedPrice !== null ? 1 : 0) + selectedStars.length}
-              </Text>
-            </View>
-          )}
-          <Text style={[
-            styles.filterArrow,
-            isPriceStarFilterVisible && styles.filterArrowUp,
-            (isPriceStarFilterVisible || selectedPrice !== null || selectedStars.length > 0) && styles.filterArrowActive
-          ]}>
-            {isPriceStarFilterVisible ? '▲' : '▼'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setIsAdvancedFilterVisible(true)}>
-          <Text style={[
-            styles.filterBtnText,
-            (isAdvancedFilterVisible || 
-             advancedFilters.hotFilters.length > 0 ||
-             advancedFilters.accommodationTypes.length > 0 ||
-             advancedFilters.hotelFeatures.length > 0 ||
-             advancedFilters.roomFeatures.length > 0) && styles.filterBtnTextActive
-          ]}>
-            筛选
-          </Text>
-          {(advancedFilters.hotFilters.length > 0 ||
-            advancedFilters.accommodationTypes.length > 0 ||
-            advancedFilters.hotelFeatures.length > 0 ||
-            advancedFilters.roomFeatures.length > 0) && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>
-                {advancedFilters.hotFilters.length +
-                 advancedFilters.accommodationTypes.length +
-                 advancedFilters.hotelFeatures.length +
-                 advancedFilters.roomFeatures.length}
-              </Text>
-            </View>
-          )}
-          <Text style={[
-            styles.filterArrow,
-            isAdvancedFilterVisible && styles.filterArrowUp,
-            (isAdvancedFilterVisible || 
-             advancedFilters.hotFilters.length > 0 ||
-             advancedFilters.accommodationTypes.length > 0 ||
-             advancedFilters.hotelFeatures.length > 0 ||
-             advancedFilters.roomFeatures.length > 0) && styles.filterArrowActive
-          ]}>
-            {isAdvancedFilterVisible ? '▲' : '▼'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ListHeader
+        location={location}
+        startDate={startDate}
+        endDate={endDate}
+        rooms={rooms}
+        adults={adults}
+        children={children}
+        searchKeyword={searchKeyword}
+        onBackPress={handleGoBack}
+        onHeaderInfoPress={() => setIsModalVisible(true)}
+        onSearchKeywordChange={setSearchKeyword}
+        onSearchSubmit={searchHotels}
+      />
+
+      <FilterBar
+        sortType={sortType}
+        selectedPrice={selectedPrice}
+        selectedStars={selectedStars}
+        advancedFilters={advancedFilters}
+        isSortFilterVisible={isSortFilterVisible}
+        isPriceStarFilterVisible={isPriceStarFilterVisible}
+        isAdvancedFilterVisible={isAdvancedFilterVisible}
+        onSortPress={() => setIsSortFilterVisible(true)}
+        onPriceStarPress={() => setIsPriceStarFilterVisible(true)}
+        onAdvancedFilterPress={() => setIsAdvancedFilterVisible(true)}
+      />
       
-      {/* 酒店列表 */}
       {isLoading ? (
         <HotelListSkeleton />
       ) : (
@@ -547,89 +316,29 @@ const HotelListPage = ({
         />
       )}
 
-      {/* 回到顶部按钮 */}
-      {showScrollTop && (
-        <TouchableOpacity
-          style={styles.scrollTopButton}
-          onPress={scrollToTop}
-          activeOpacity={0.8}>
-          <Image
-            source={{uri: 'https://img.cdn1.vip/i/699d8a74b78e8_1771932276.png'}}
-            style={styles.scrollTopIcon}
-          />
-        </TouchableOpacity>
-      )}
+      <ScrollToTop
+        visible={showScrollTop}
+        onPress={scrollToTop}
+      />
 
-      {/* 顶部固定的蒙层弹窗 */}
-      <Modal
+      <SearchModal
         visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.modalContent}>
-                {/* 位置选择 */}
-                <View style={styles.locationModalContent}>
-                  <LocationSelector
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="输入城市"
-                  />
-                </View>
-                <View style={styles.horizontalDivider} />
-
-                {/* 日期选择 */}
-                <View style={styles.searchItem}>
-                  <DateSelector
-                    startDate={startDate}
-                    endDate={endDate}
-                    onDateSelect={(start, end) => {
-                      setStartDate(start);
-                      setEndDate(end);
-                    }}
-                  />
-                </View>
-
-                {/* 横线分隔符 */}
-                <View style={styles.horizontalDivider} />
-                
-                {/* 客房和人数统计 */}
-                <TouchableOpacity
-                  style={styles.searchItem}
-                  onPress={() => setIsGuestModalVisible(true)}>
-                  <Text style={styles.searchLabel}>👥</Text>
-                  <View style={styles.guestInfoContainer}>
-                    <Text style={styles.guestInfoText}>
-                      {rooms}间房 · {adults}成人 · {children}儿童
-                    </Text>
-                    <Text style={styles.dropdownIcon}>▼</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleModalConfirm}>
-                <Text style={styles.confirmButtonText}>确认</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* 选择客房和入住人数弹窗 */}
-      <GuestModal
-        visible={isGuestModalVisible}
-        onClose={() => setIsGuestModalVisible(false)}
-        onConfirm={() => {}}
+        location={location}
+        startDate={startDate}
+        endDate={endDate}
         rooms={rooms}
         adults={adults}
         children={children}
+        isGuestModalVisible={isGuestModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onConfirm={handleModalConfirm}
+        onLocationChange={setLocation}
+        onDateSelect={(start, end) => {
+          setStartDate(start);
+          setEndDate(end);
+        }}
+        onGuestModalOpen={() => setIsGuestModalVisible(true)}
+        onGuestModalClose={() => setIsGuestModalVisible(false)}
         onRoomsChange={setRooms}
         onAdultsChange={setAdults}
         onChildrenChange={setChildren}
