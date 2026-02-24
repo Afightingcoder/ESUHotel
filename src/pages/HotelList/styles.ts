@@ -112,16 +112,19 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
   headerInfoItem: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     paddingVertical: 4,
     borderRadius: 4,
-    marginRight: 0,
+    minWidth: 65,
+    maxWidth: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerInfoText: {
-    fontSize: 12,
+    fontSize: 16,
+    fontWeight: '800',
     color: '#333',
     textAlign: 'left' as const,
-    maxWidth: 50
   },
   searchBoxContainer: {
     marginLeft: 8,
@@ -356,7 +359,8 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   guestInfoText: {
-    fontSize: 14,
+    fontSize: 20,
+    fontWeight: '500',
     color: '#333',
     flex: 1,
   },

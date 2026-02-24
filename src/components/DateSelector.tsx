@@ -13,8 +13,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   endDate,
   onDateSelect,
 }) => {
-  console.log('startDate1', startDate);
-  console.log('endDate2', endDate);
   return (
     <View style={styles.container}>
       <Calendar

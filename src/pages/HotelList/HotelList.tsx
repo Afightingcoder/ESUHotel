@@ -412,7 +412,7 @@ const HotelListPage = ({
           <TouchableOpacity
             style={styles.headerInfoItem}
             onPress={() => setIsModalVisible(true)}>
-            <Text style={[styles.headerInfoText, {maxWidth: 20}]}>
+            <Text style={styles.headerInfoText}>
               {rooms}间{adults+children}人
             </Text>
           </TouchableOpacity>
@@ -429,6 +429,8 @@ const HotelListPage = ({
                 autoCapitalize="none"
                 keyboardType="default"
                 autoCorrect={false}
+                returnKeyType="search"
+                onSubmitEditing={searchHotels}
               />
             </View>
           </View>

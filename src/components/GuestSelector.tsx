@@ -162,13 +162,15 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   numberValue: {
-    minWidth: 40,
-    textAlign: 'center',
+    minWidth: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginHorizontal: 16,
   },
   numberValueText: {
-    fontSize: 14,
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000',
   },
 });
 
