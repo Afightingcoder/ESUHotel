@@ -261,9 +261,13 @@ const HotelSearchPage = ({
             style={styles.bannerImage}>
             <View style={styles.bannerOverlay}>
               <Text style={styles.bannerTitle}>{bannerHotel.name}</Text>
-              <Text style={styles.bannerSubtitle}>
-                {bannerHotel.amenities?.slice(0, 3).map((amenity: string) => amenitiesMap[amenity] || amenity).join(' · ') || '豪华体验 · 优质服务'}
-              </Text>
+              <View style={styles.bannerTagsContainer}>
+                {(bannerHotel.amenities?.slice(0, 5)).map((amenity: string, index: number) => (
+                  <View key={index} style={styles.bannerTag}>
+                    <Text style={styles.bannerTagText}>{amenitiesMap[amenity] || amenity}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </ImageBackground>
         </TouchableOpacity>
@@ -287,10 +291,10 @@ const HotelSearchPage = ({
         </View>
 
         <View style={styles.searchItem}>
-          <Text style={styles.searchLabel}>🔍</Text>
+          <Text style={[styles.searchLabel,{marginRight: 0}]}>🔍</Text>
           <View style={styles.floatingLabelInputContainer}>
             {keyword ? (
-              <Text style={styles.floatingLabel}>酒店/品牌</Text>
+              <Text style={[styles.floatingLabel, {left: 6}]}>酒店/品牌</Text>
             ) : null}
             <TextInput
               style={[

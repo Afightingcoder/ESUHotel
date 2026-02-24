@@ -38,3 +38,31 @@ export const formatDate = (dateStr: string) => {
   }
   return dateStr;
 };
+
+/**
+ * 计算两个日期之间的天数差（晚数）
+ * @param startDate 开始日期字符串 (YYYY-MM-DD 或 MM-DD)
+ * @param endDate 结束日期字符串 (YYYY-MM-DD 或 MM-DD)
+ * @returns 晚数
+ */
+export const calculateNights = (startDate: string, endDate: string): number => {
+  if (!startDate || !endDate) return 1;
+  
+  const currentYear = new Date().getFullYear();
+  
+  const parseDate = (dateStr: string): Date => {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+    } else if (parts.length === 2) {
+      return new Date(`${currentYear}-${parts[0]}-${parts[1]}`);
+    }
+    return new Date(dateStr);
+  };
+  
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 1;
+};

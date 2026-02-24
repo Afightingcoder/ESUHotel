@@ -243,6 +243,7 @@ const Calendar: React.FC<CalendarProps> = memo(({
       <TouchableOpacity
         style={styles.calendarContainer}
         onPress={() => setIsVisible(true)}>
+          <Text style={styles.calendarIcon}>📅</Text>
         <View style={styles.dateDisplayContainer}>
           <View style={styles.dateRow}>
             <View style={styles.dateItem}>
@@ -269,7 +270,7 @@ const Calendar: React.FC<CalendarProps> = memo(({
             <Text style={styles.nightsDisplay}>共 {nights} 晚</Text>
           </View>
         </View>
-        <Text style={styles.calendarIcon}>📅</Text>
+        
       </TouchableOpacity>
 
       {/* 日历模态框 */}
@@ -349,19 +350,14 @@ const styles = StyleSheet.create({
   calendarContainer: {
     flex: 1,
     height: 44,
-    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#fff',
   },
-  calendarText: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
-  },
   calendarIcon: {
     fontSize: 18,
+    marginRight: 12,
   },
   dateDisplayContainer: {
     flex: 1,
@@ -376,17 +372,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateSeparator: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#333',
     marginHorizontal: 4,
   },
   datePart: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     color: '#333',
   },
   weekPart: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     marginLeft: 4,
   },

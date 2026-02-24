@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback, memo} from 'react';
+import React, {useState, useMemo, useCallback, memo, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   Image,
   Modal,
+  Animated,
 } from 'react-native';
 import type {RouteType, HotelType} from '../../types';
 import LocationSelector from '../../components/LocationSelector';
@@ -15,7 +16,7 @@ import GuestModal from '../../components/GuestModal';
 import SortFilter from '../../components/SortFilter';
 import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
-import {formatDate} from '../../utils/dateUtils';
+import {formatDate, calculateNights} from '../../utils/dateUtils';
 import {styles} from './styles';
 import {getHotelDetail, getHotelList} from '../../utils/api';
 import {amenitiesMap, removeFilterKeywords, parseKeywordFilters} from '../../utils/mappings';
@@ -25,9 +26,11 @@ const ITEM_HEIGHT = 140;
 interface HotelItemProps {
   item: HotelType;
   onPress: (item: HotelType) => void;
+  rooms: number;
+  nights: number;
 }
 
-const HotelItem = memo(({item, onPress}: HotelItemProps) => {
+const HotelItem = memo(({item, onPress, rooms, nights}: HotelItemProps) => {
   const handlePress = useCallback(() => {
     onPress(item);
   }, [item, onPress]);
@@ -41,7 +44,7 @@ const HotelItem = memo(({item, onPress}: HotelItemProps) => {
       onPress={handlePress}
       activeOpacity={0.8}>
       <Image 
-        source={{uri: item.photos[0].url}} 
+        source={{uri: item.photos[1].url}} 
         style={styles.hotelImage}
         defaultSource={{uri: 'https://picsum.photos/id/1031/200/200'}}
       />
@@ -59,6 +62,7 @@ const HotelItem = memo(({item, onPress}: HotelItemProps) => {
           ))}
         </View>
         <View style={styles.hotelPriceContainer}>
+          <Text style={styles.hotelRoomNight}>{rooms}间·{nights}晚</Text>
           <View style={styles.priceWrapper}>
             <Text style={styles.hotelPriceSymbol}>¥</Text>
             <Text style={styles.hotelPrice}>{price}</Text>
@@ -84,6 +88,8 @@ const HotelListPage = ({
   const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
   const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
   const [children, setChildren] = useState<number>(routeParams?.children || 0);
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+  const flatListRef = useRef<FlatList>(null);
 
   React.useEffect(() => {
     console.log('接收到的routeParams:', routeParams);
@@ -300,9 +306,11 @@ const HotelListPage = ({
     }
   }, [startDate, endDate, rooms, adults, children, hotels, location, searchKeyword, selectedPrice, selectedStars, advancedFilters, sortType, navigateTo]);
 
+  const nights = useMemo(() => calculateNights(startDate, endDate), [startDate, endDate]);
+
   const renderHotelItem = useCallback(({item}: {item: HotelType}) => (
-    <HotelItem item={item} onPress={handleHotelPress} />
-  ), [handleHotelPress]);
+    <HotelItem item={item} onPress={handleHotelPress} rooms={rooms} nights={nights} />
+  ), [handleHotelPress, rooms, nights]);
 
   const keyExtractor = useCallback((item: HotelType) => `${item.id}`, []);
 
@@ -311,6 +319,15 @@ const HotelListPage = ({
     offset: ITEM_HEIGHT * index,
     index,
   }), []);
+
+  const handleScroll = useCallback((event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > 200);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+  }, []);
 
   const handleGoBack = useCallback(() => {
     navigateTo('search', {
@@ -380,7 +397,7 @@ const HotelListPage = ({
           <TouchableOpacity
             style={styles.headerInfoItem}
             onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.headerInfoText} numberOfLines={2}>{location}</Text>
+            <Text style={styles.headerInfoText} numberOfLines={2}>{location||'暂无位置信息'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerInfoItem}
@@ -498,6 +515,7 @@ const HotelListPage = ({
       
       {/* 酒店列表 */}
       <FlatList
+        ref={flatListRef}
         data={sortedHotels}
         renderItem={renderHotelItem}
         keyExtractor={keyExtractor}
@@ -510,7 +528,23 @@ const HotelListPage = ({
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderListEmpty}
         ListFooterComponent={renderListFooter}
+        contentContainerStyle={styles.listContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
+
+      {/* 回到顶部按钮 */}
+      {showScrollTop && (
+        <TouchableOpacity
+          style={styles.scrollTopButton}
+          onPress={scrollToTop}
+          activeOpacity={0.8}>
+          <Image
+            source={{uri: 'https://img.cdn1.vip/i/699d8a74b78e8_1771932276.png'}}
+            style={styles.scrollTopIcon}
+          />
+        </TouchableOpacity>
+      )}
 
       {/* 顶部固定的蒙层弹窗 */}
       <Modal

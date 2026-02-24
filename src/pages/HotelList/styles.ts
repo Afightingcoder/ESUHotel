@@ -5,6 +5,32 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  scrollTopButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  scrollTopIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
   // 列表页筛选头样式
   listFilterHeader: {
     flexDirection: 'row',
@@ -126,7 +152,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 8,
-    marginHorizontal: 16,
     marginBottom: 12,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -186,10 +211,16 @@ export const styles = StyleSheet.create({
     flexWrap: 'nowrap',
     justifyContent: 'flex-end',
     alignItems: 'center',
+    gap: 8,
+  },
+  hotelRoomNight: {
+    fontSize: 13,
+    color: '#1890ff',
+    fontWeight: '500',
   },
   hotelScore: {
     fontSize: 12,
-    color: '#ff9500',
+    color: '#1890ff',
     fontWeight: '500',
   },
   priceWrapper: {
@@ -197,18 +228,18 @@ export const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   hotelPriceSymbol: {
-    fontSize: 12,
-    color: '#ff4d4f',
+    fontSize: 13,
+    color: '#1890ff',
     fontWeight: '500',
   },
   hotelPrice: {
-    fontSize: 18,
-    color: '#ff4d4f',
-    fontWeight: '600',
+    fontSize: 20,
+    color: '#1890ff',
+    fontWeight: '700',
   },
   hotelPriceDesc: {
-    fontSize: 10,
-    color: '#666',
+    fontSize: 12,
+    color: '#1890ff',
   },
   // 加载更多样式
   loadMoreFooter: {

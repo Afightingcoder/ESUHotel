@@ -25,6 +25,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   placeholder = '输入城市',
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   // 请求定位权限
   const requestLocationPermission = async () => {
@@ -138,15 +139,27 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder}
-          autoCapitalize="none"
-          keyboardType="default"
-          autoCorrect={false}
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChange}
+            placeholder={placeholder}
+            placeholderTextColor="#999"
+            autoCapitalize="none"
+            keyboardType="default"
+            autoCorrect={false}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
+          {!isFocused && value && (
+            <View style={styles.ellipsisOverlay} pointerEvents="none">
+              <Text style={styles.inputText} numberOfLines={1} ellipsizeMode="tail">
+                {value}
+              </Text>
+            </View>
+          )}
+        </View>
         {/* 竖线分隔符 */}
         <View style={styles.verticalDivider} />
         <TouchableOpacity
@@ -171,17 +184,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     width: '100%',
-    height: 44,
+    height: 34,
+  },
+  inputWrapper: {
+    flex: 1,
+    height: 34,
   },
   input: {
     flex: 1,
-    height: 44,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    height: 34,
+    fontSize: 20,
+    fontWeight: '600',
+    paddingBottom: 0,
+    paddingRight: 8,
+  },
+  ellipsisOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 8,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  inputText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
   },
   verticalDivider: {
     width: 0.5,
-    height: '60%',
+    height: '100%',
     backgroundColor: '#ddd',
     marginHorizontal: 8,
   },

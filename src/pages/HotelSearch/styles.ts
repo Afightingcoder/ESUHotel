@@ -24,14 +24,31 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   bannerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
   },
-  bannerSubtitle: {
-    fontSize: 14,
+  bannerTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  bannerTag: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  bannerTagText: {
+    fontSize: 12,
     color: '#fff',
+    fontWeight: '500',
   },
   // Banner骨架屏样式
   bannerSkeleton: {
@@ -80,18 +97,20 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333',
     fontWeight: '500',
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     height: 44,
     paddingHorizontal: 12,
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '600',
   },
   searchInputWrapper: {
     flex: 1,
-    height: 44,
     paddingHorizontal: 12,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 5,
   },
   searchInputWithText: {
     paddingTop: 16,
@@ -117,23 +136,6 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 40,
   },
-  locationInput: {
-    flex: 1,
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-  },
-
-  locationArrow: {
-    fontSize: 14,
-    color: '#999',
-  },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,11 +148,6 @@ export const styles = StyleSheet.create({
   locationIcon: {
     fontSize: 16,
     marginRight: 6,
-  },
-  locationText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1890ff',
   },
   // 筛选条件样式
   filterContainer: {
@@ -234,12 +231,12 @@ export const styles = StyleSheet.create({
   floatingLabelInputContainer: {
     flex: 1,
     position: 'relative',
-    height: 44,
+    height: 56,
   },
   floatingLabel: {
     position: 'absolute',
-    top: -8,
-    left: 12,
+    top: 0,
+    left: 10,
     fontSize: 12,
     color: '#999',
     backgroundColor: '#fff',
