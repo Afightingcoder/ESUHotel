@@ -171,7 +171,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       </View>
 
       {/* 加载弹窗 */}
-      <LoadingModal visible={loading} message="正在紧急定位中" />
+      <LoadingModal visible={loading} message="正在定位" />
     </View>
   );
 };

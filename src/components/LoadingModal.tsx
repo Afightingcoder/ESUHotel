@@ -17,7 +17,7 @@ const {width} = Dimensions.get('window');
 
 const LoadingModal: React.FC<LoadingModalProps> = ({
   visible,
-  message = '正在处理中...',
+  message = '正在处理...',
 }) => {
   return (
     <Modal visible={visible} transparent={true} animationType="fade">

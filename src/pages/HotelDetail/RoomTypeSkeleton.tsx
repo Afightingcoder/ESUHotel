@@ -1,9 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {View, Animated, StyleSheet, Image, Text} from 'react-native';
 
-const SKELETON_COUNT = 5;
-
-const HotelItemSkeleton = () => {
+const RoomTypeItemSkeleton = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,63 +32,59 @@ const HotelItemSkeleton = () => {
       <View style={styles.skeletonInfo}>
         <View style={styles.skeletonNameRow}>
           <Animated.View style={[styles.skeletonName, {opacity}]} />
-          <Animated.View style={[styles.skeletonStar, {opacity}]} />
+          <Animated.View style={[styles.skeletonTags, {opacity}]} />
         </View>
-        <Animated.View style={[styles.skeletonAddress, {opacity}]} />
-        <View style={styles.skeletonTags}>
-          <Animated.View style={[styles.skeletonTag, {opacity}]} />
-          <Animated.View style={[styles.skeletonTag, {opacity}]} />
-          <Animated.View style={[styles.skeletonTag, {opacity}]} />
-        </View>
-        <View style={styles.skeletonPriceRow}>
-          <Animated.View style={[styles.skeletonRoomNight, {opacity}]} />
-          <Animated.View style={[styles.skeletonPrice, {opacity}]} />
+        <Animated.View style={[styles.skeletonDetail, {opacity}]} />
+        <View style={styles.skeletonBottom}>
+          <Animated.View style={[styles.skeletonStock, {opacity}]} />
+          <View style={styles.skeletonPriceRow}>
+            <Animated.View style={[styles.skeletonPrice, {opacity}]} />
+            <Animated.View style={[styles.skeletonBtn, {opacity}]} />
+          </View>
         </View>
       </View>
     </View>
   );
 };
 
-const HotelListSkeleton = () => {
+const RoomTypeSkeleton = () => {
   return (
     <View style={styles.container}>
-      <HotelItemSkeleton />
-      <HotelItemSkeleton />
-      <HotelItemSkeleton />
-      <HotelItemSkeleton />
-      <HotelItemSkeleton />
+      <RoomTypeItemSkeleton />
+      <RoomTypeItemSkeleton />
       <View style={styles.loadingOverlay}>
         <Image
           source={{uri: 'https://img.cdn1.vip/i/699da81f4a28c_1771939871.png'}}
           style={styles.loadingIcon}
         />
-        <Text style={styles.loadingText}>正在为您查询酒店，请耐心等待</Text>
+        <Text style={styles.loadingText}>正在为您匹配房型</Text>
       </View>
+      <RoomTypeItemSkeleton />
+      <RoomTypeItemSkeleton />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    padding: 16,
+    backgroundColor: '#fff',
   },
   skeletonItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
-    height: 120,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   skeletonImage: {
-    width: 100,
-    height: 120,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
     backgroundColor: '#e0e0e0',
+    marginRight: 12,
   },
   skeletonInfo: {
     flex: 1,
-    padding: 12,
     justifyContent: 'space-between',
   },
   skeletonNameRow: {
@@ -99,72 +93,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skeletonName: {
-    width: 120,
+    width: 100,
     height: 16,
     backgroundColor: '#e0e0e0',
     borderRadius: 4,
   },
-  skeletonStar: {
-    width: 60,
-    height: 16,
+  skeletonTags: {
+    width: 80,
+    height: 14,
     backgroundColor: '#e0e0e0',
     borderRadius: 4,
   },
-  skeletonAddress: {
-    width: '70%',
+  skeletonDetail: {
+    width: '60%',
     height: 12,
     backgroundColor: '#e0e0e0',
     borderRadius: 4,
     marginVertical: 8,
   },
-  skeletonTags: {
+  skeletonBottom: {
     flexDirection: 'row',
-    gap: 6,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  skeletonTag: {
-    width: 50,
-    height: 16,
+  skeletonStock: {
+    width: 60,
+    height: 12,
     backgroundColor: '#e0e0e0',
     borderRadius: 4,
   },
   skeletonPriceRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    gap: 8,
-  },
-  skeletonRoomNight: {
-    width: 60,
-    height: 14,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
+    gap: 12,
   },
   skeletonPrice: {
-    width: 80,
+    width: 70,
     height: 20,
     backgroundColor: '#e0e0e0',
     borderRadius: 4,
   },
+  skeletonBtn: {
+    width: 72,
+    height: 32,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 6,
+  },
   loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingIcon: {
-    width: 56,
-    height: 56,
-    marginBottom: 16,
+    width: 48,
+    height: 48,
+    marginBottom: 12,
   },
   loadingText: {
-    fontSize: 15,
-    color: '#333',
+    fontSize: 14,
+    color: '#666',
     textAlign: 'center',
-    fontWeight: '500',
   },
 });
 
-export default HotelListSkeleton;
+export default RoomTypeSkeleton;

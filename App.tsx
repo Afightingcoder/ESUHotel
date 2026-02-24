@@ -9,7 +9,7 @@ import {Colors} from 'react-native/Libraries/NewAppScreen';
 // 导入页面组件
 import HotelSearch from './src/pages/HotelSearch/HotelSearch';
 import HotelList from './src/pages/HotelList/HotelList';
-import HotelDetail from './src/pages/HotelDetail';
+import HotelDetail from './src/pages/HotelDetail/HotelDetail';
 
 // 导入类型定义
 import type {RouteType} from './src/types';
