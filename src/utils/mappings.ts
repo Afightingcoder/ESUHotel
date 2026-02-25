@@ -1,6 +1,6 @@
 // 酒店设施映射关系
 export const amenitiesMap: Record<string, string> = {
-  WiFi: "WiFi",
+  WiFi: "免费WiFi",
   Parking: "免费停车",
   Breakfast: "免费早餐",
   Family: "亲子友好",
@@ -49,6 +49,7 @@ export const hotFiltersMap: Record<string, string> = {
   '近地铁': 'subway',
   '亲子友好': 'family',
   '豪华酒店': 'hotel',
+  '机场接送': 'Airport',
 };
 
 // 住宿类型关键词映射（中文 -> 英文key）

@@ -98,7 +98,7 @@ export const getHotelDetail = async (hotelId: string, params?: HotelDetailParams
   }
   
   const queryString = queryParams.toString();
-  const url = queryString ? `/hotels/detail/${hotelId}?${queryString}` : `/hotels/detail/${hotelId}`;
+  const url = queryString ? `/hotels/public/${hotelId}?${queryString}` : `/hotels/public/${hotelId}`;
   
   return fetchApi(url);
 };

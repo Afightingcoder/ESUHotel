@@ -118,6 +118,7 @@ const HotelSearchPage = ({
     {id: 'tag_03', name: '免费停车'},
     {id: 'tag_04', name: '近地铁'},
     {id: 'tag_05', name: '含早餐'},
+    {id: 'tag_06',name:'机场接送'}
   ];
 
   useEffect(() => {
