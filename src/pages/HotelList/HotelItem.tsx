@@ -25,7 +25,7 @@ const HotelItem = memo(({item, onPress, rooms, nights}: HotelItemProps) => {
       onPress={handlePress}
       activeOpacity={0.8}>
       <Image 
-        source={{uri: item.photos[1].url}} 
+        source={{uri: item.photos[0].url}} 
         style={styles.hotelImage}
         defaultSource={{uri: 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}}
       />

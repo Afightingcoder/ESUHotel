@@ -1,7 +1,7 @@
 // API封装文件
 
 // 基地址
-export const BASE_URL = 'http://192.168.10.109:3000/api'; // 需要替换为本机ipv4地址, localhost移动端无法访问
+export const BASE_URL = 'https://easystay-admin-production.up.railway.app/api'; // 需要替换为本机ipv4地址, localhost移动端无法访问
 
 // 酒店搜索参数类型
 export interface HotelSearchParams {

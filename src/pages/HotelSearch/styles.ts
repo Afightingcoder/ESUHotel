@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   // 首页Banner样式
   bannerContainer: {
     width: '100%',
-    height: 180,
+    height: 300,
     marginBottom: 16,
   },
   bannerImage: {
