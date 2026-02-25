@@ -1,8 +1,8 @@
 // 酒店设施映射关系
 export const amenitiesMap: Record<string, string> = {
   WiFi: "WiFi",
-  Parking: "停车场",
-  Breakfast: "早餐",
+  Parking: "免费停车",
+  Breakfast: "免费早餐",
   Family: "亲子友好",
   Gym: "健身房",
   Pool: "泳池",
@@ -12,11 +12,11 @@ export const amenitiesMap: Record<string, string> = {
   gym: "健身房",
   spa: "水疗",
   restaurant: "餐厅",
-  bar: "酒吧",
-  hotel: "酒店",
+  bar: "特色酒吧",
+  hotel: "豪华酒店",
   apartment: "公寓",
-  homestay: "民宿",
-  hostel: "青旅",
+  homestay: "主题民宿",
+  hostel: "经济型青旅",
 };
 
 // 房型设施标签映射关系
@@ -46,14 +46,17 @@ export const hotFiltersMap: Record<string, string> = {
   '免费取消': 'cancel',
   '免费WiFi': 'wifi',
   '免费停车': 'parking',
+  '近地铁': 'subway',
+  '亲子友好': 'family',
+  '豪华酒店': 'hotel',
 };
 
 // 住宿类型关键词映射（中文 -> 英文key）
 export const accommodationTypesMap: Record<string, string> = {
-  '酒店': 'hotel',
+  '豪华酒店': 'hotel',
   '公寓': 'apartment',
-  '民宿': 'homestay',
-  '青旅': 'hostel',
+  '主题民宿': 'homestay',
+  '经济型青旅': 'hostel',
 };
 
 // 酒店特色关键词映射（中文 -> 英文key）
@@ -62,7 +65,7 @@ export const hotelFeaturesMap: Record<string, string> = {
   '健身房': 'gym',
   '水疗': 'spa',
   '餐厅': 'restaurant',
-  '酒吧': 'bar',
+  '特色酒吧': 'bar',
 };
 
 // 客房特色关键词映射（中文 -> 英文key）

@@ -19,7 +19,7 @@ import GuestModal from '../../components/GuestModal';
 import PriceStarFilter from '../../components/PriceStarFilter';
 import {formatDate} from '../../utils/dateUtils';
 import {getHotelList, getHotelDetail} from '../../utils/api';
-import {amenitiesMap} from '../../utils/mappings';
+import {amenitiesMap, hotFiltersMap} from '../../utils/mappings';
 import {styles} from './styles';
 import {init} from 'react-native-amap-geolocation';
 
@@ -118,7 +118,6 @@ const HotelSearchPage = ({
     {id: 'tag_03', name: '免费停车'},
     {id: 'tag_04', name: '近地铁'},
     {id: 'tag_05', name: '含早餐'},
-    {id: 'tag_06', name: '江景房'},
   ];
 
   useEffect(() => {
@@ -179,10 +178,17 @@ const HotelSearchPage = ({
   };
 
   const handleSearch = async () => {
+    let mappedKeyword = keyword;
+    Object.entries(hotFiltersMap).forEach(([chinese, english]) => {
+      if (keyword === chinese) {
+        mappedKeyword = english;
+      }
+    });
+    
     try {
       const searchParams: any = {
         location,
-        keyword,
+        keyword: mappedKeyword,
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
         rooms,

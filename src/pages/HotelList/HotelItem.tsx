@@ -36,7 +36,7 @@ const HotelItem = memo(({item, onPress, rooms, nights}: HotelItemProps) => {
         </View>
         <Text style={styles.hotelAddress} numberOfLines={1}>{item.address}</Text>
         <View style={styles.hotelTags}>
-          {item.amenities && item.amenities.length > 0 && item.amenities.slice(0, 5).map((amenity: string, index: number) => (
+          {item.amenities && item.amenities.length > 0 && item.amenities.slice(0, 4).map((amenity: string, index: number) => (
             <Text key={`${amenity}_${index}`} style={styles.hotelTagText}>
               {amenitiesMap[amenity] || amenity}
             </Text>
