@@ -6,29 +6,29 @@ import React, {useState} from 'react';
 import {SafeAreaView, useColorScheme, StatusBar} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
-// 导入页面组件
 import HotelSearch from './src/pages/HotelSearch/HotelSearch';
 import HotelList from './src/pages/HotelList/HotelList';
 import HotelDetail from './src/pages/HotelDetail/HotelDetail';
+import PageTransition from './src/components/PageTransition';
 
-// 导入类型定义
 import type {RouteType} from './src/types';
 
-// 主应用组件（路由控制核心）
+const routeOrder: RouteType[] = ['search', 'list', 'detail'];
+
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const [currentRoute, setCurrentRoute] = useState<RouteType>('search');
   const [routeParams, setRouteParams] = useState<any>({});
   const [previousRoute, setPreviousRoute] = useState<RouteType | null>(null);
+  const [animationKey, setAnimationKey] = useState(0);
 
-  // 路由跳转方法
   const navigateTo = (route: RouteType, params?: any) => {
     setRouteParams(params || {});
     setPreviousRoute(currentRoute);
     setCurrentRoute(route);
+    setAnimationKey(prev => prev + 1);
   };
 
-  // 返回上一页
   const navigateBack = (params?: any) => {
     const targetRoute = routeParams?.fromRoute || previousRoute || 'search';
     if (targetRoute === 'search') {
@@ -40,7 +40,13 @@ const App = () => {
     }
   };
 
-  // 根据当前路由渲染对应页面
+  const getDirection = (): 'forward' | 'back' => {
+    if (!previousRoute) return 'forward';
+    const currentIndex = routeOrder.indexOf(currentRoute);
+    const previousIndex = routeOrder.indexOf(previousRoute);
+    return currentIndex < previousIndex ? 'back' : 'forward';
+  };
+
   const renderCurrentPage = () => {
     switch (currentRoute) {
       case 'search':
@@ -67,7 +73,9 @@ const App = () => {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      {renderCurrentPage()}
+      <PageTransition direction={getDirection()} trigger={animationKey}>
+        {renderCurrentPage()}
+      </PageTransition>
     </SafeAreaView>
   );
 };
