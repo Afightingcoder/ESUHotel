@@ -11,7 +11,14 @@ import {
   Modal,
   Animated,
 } from 'react-native';
-import type {RouteType} from '../../types';
+import type {
+  RouteType,
+  HotelType,
+  SearchRouteParams,
+  ListRouteParams,
+  DetailRouteParams,
+  HotelSearchParams,
+} from '../../types';
 import LoadingModal from '../../components/LoadingModal';
 import LocationSelector from '../../components/LocationSelector';
 import DateSelector from '../../components/DateSelector';
@@ -63,17 +70,19 @@ const SkeletonBanner = () => {
   );
 };
 
+type NavigateFunction = (route: RouteType, params?: ListRouteParams | DetailRouteParams) => void;
+
 const HotelSearchPage = ({
   navigateTo,
   routeParams,
 }: {
-  navigateTo: (route: RouteType, params?: any) => void;
-  routeParams?: any;
+  navigateTo: NavigateFunction;
+  routeParams: SearchRouteParams;
 }) => {
   const [location, setLocation] = useState<string>(routeParams?.location || '上海');
   const [keyword, setKeyword] = useState<string>(routeParams?.keyword || '');
   
-  const [bannerHotel, setBannerHotel] = useState<any>(null);
+  const [bannerHotel, setBannerHotel] = useState<HotelType | null>(null);
   const [bannerLoading, setBannerLoading] = useState<boolean>(true);
 
   const getTodayDate = () => {
@@ -187,7 +196,7 @@ const HotelSearchPage = ({
     });
     
     try {
-      const searchParams: any = {
+      const searchParams: HotelSearchParams = {
         location,
         keyword: mappedKeyword,
         startDate: formatDate(startDate),
@@ -226,7 +235,6 @@ const HotelSearchPage = ({
       navigateTo('list', {
         location,
         keyword,
-        filters,
         startDate: searchParams.startDate,
         endDate: searchParams.endDate,
         rooms,

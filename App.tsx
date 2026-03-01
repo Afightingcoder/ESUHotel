@@ -11,32 +11,47 @@ import HotelList from './src/pages/HotelList/HotelList';
 import HotelDetail from './src/pages/HotelDetail/HotelDetail';
 import PageTransition from './src/components/PageTransition';
 
-import type {RouteType} from './src/types';
+import type {
+  RouteType,
+  RouteParams,
+  SearchRouteParams,
+  ListRouteParams,
+  DetailRouteParams,
+} from './src/types';
 
 const routeOrder: RouteType[] = ['search', 'list', 'detail'];
+
+type NavigateFunction = (route: RouteType, params?: RouteParams) => void;
+type NavigateBackFunction = (params?: Partial<DetailRouteParams>) => void;
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const [currentRoute, setCurrentRoute] = useState<RouteType>('search');
-  const [routeParams, setRouteParams] = useState<any>({});
+  const [routeParams, setRouteParams] = useState<RouteParams>({} as SearchRouteParams);
   const [previousRoute, setPreviousRoute] = useState<RouteType | null>(null);
   const [animationKey, setAnimationKey] = useState(0);
 
-  const navigateTo = (route: RouteType, params?: any) => {
-    setRouteParams(params || {});
+  const navigateTo: NavigateFunction = (route, params) => {
+    setRouteParams(params ?? ({} as SearchRouteParams));
     setPreviousRoute(currentRoute);
     setCurrentRoute(route);
     setAnimationKey(prev => prev + 1);
   };
 
-  const navigateBack = (params?: any) => {
-    const targetRoute = routeParams?.fromRoute || previousRoute || 'search';
+  const navigateBack: NavigateBackFunction = (params) => {
+    const detailParams = routeParams as DetailRouteParams;
+    const targetRoute = detailParams?.fromRoute ?? previousRoute ?? 'search';
+    
     if (targetRoute === 'search') {
-      navigateTo('search', params);
+      navigateTo('search', params as SearchRouteParams);
     } else if (targetRoute === 'list') {
-      navigateTo('list', params || routeParams);
+      const listParams: ListRouteParams = {
+        ...params,
+        ...detailParams,
+      };
+      navigateTo('list', listParams);
     } else {
-      navigateTo('search', params);
+      navigateTo('search', params as SearchRouteParams);
     }
   };
 
@@ -50,15 +65,33 @@ const App = () => {
   const renderCurrentPage = () => {
     switch (currentRoute) {
       case 'search':
-        return <HotelSearch navigateTo={navigateTo} routeParams={routeParams} />;
+        return (
+          <HotelSearch
+            navigateTo={navigateTo}
+            routeParams={routeParams as SearchRouteParams}
+          />
+        );
       case 'list':
-        return <HotelList navigateTo={navigateTo} routeParams={routeParams} />;
+        return (
+          <HotelList
+            navigateTo={navigateTo}
+            routeParams={routeParams as ListRouteParams}
+          />
+        );
       case 'detail':
         return (
-          <HotelDetail navigateBack={navigateBack} routeParams={routeParams} />
+          <HotelDetail
+            navigateBack={navigateBack}
+            routeParams={routeParams as DetailRouteParams}
+          />
         );
       default:
-        return <HotelSearch navigateTo={navigateTo} routeParams={routeParams} />;
+        return (
+          <HotelSearch
+            navigateTo={navigateTo}
+            routeParams={routeParams as SearchRouteParams}
+          />
+        );
     }
   };
 

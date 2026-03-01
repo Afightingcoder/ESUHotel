@@ -49,3 +49,129 @@ export type HotelType = {
   };
   __v: number;
 };
+
+// 高级筛选类型
+export interface AdvancedFilters {
+  hotFilters: string[];
+  accommodationTypes: string[];
+  hotelFeatures: string[];
+  roomFeatures: string[];
+}
+
+// 基础搜索参数（多页面共用）
+export interface BaseSearchParams {
+  location?: string;
+  keyword?: string;
+  startDate?: string;
+  endDate?: string;
+  rooms?: number;
+  adults?: number;
+  children?: number;
+}
+
+// 首页路由参数
+export interface SearchRouteParams extends BaseSearchParams {
+  selectedPrice?: number | null;
+  selectedStars?: number[];
+}
+
+// 列表页路由参数
+export interface ListRouteParams extends BaseSearchParams {
+  hotels?: HotelType[];
+  selectedPrice?: number | null;
+  selectedStars?: number[];
+  advancedFilters?: AdvancedFilters;
+  sortType?: string;
+  updatedData?: {
+    startDate?: string;
+    endDate?: string;
+    rooms?: number;
+    adults?: number;
+    children?: number;
+    hotels?: HotelType[];
+    location?: string;
+  };
+}
+
+// 详情页路由参数
+export interface DetailRouteParams extends BaseSearchParams {
+  hotelId: string;
+  hotelDetail?: HotelType;
+  hotels?: HotelType[];
+  selectedPrice?: number | null;
+  selectedStars?: number[];
+  advancedFilters?: AdvancedFilters;
+  sortType?: string;
+  fromRoute?: RouteType;
+}
+
+// 路由参数联合类型
+export type RouteParams = SearchRouteParams | ListRouteParams | DetailRouteParams;
+
+// API 响应类型
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status?: number;
+}
+
+// 酒店列表响应
+export type HotelListResponse = HotelType[];
+
+// 酒店详情响应
+export interface HotelDetailResponse {
+  data: HotelType;
+  message?: string;
+}
+
+// FlatList 事件类型
+export interface FlatListScrollEvent {
+  nativeEvent: {
+    contentOffset: {
+      x: number;
+      y: number;
+    };
+    contentSize?: {
+      width: number;
+      height: number;
+    };
+    layoutMeasurement?: {
+      width: number;
+      height: number;
+    };
+  };
+}
+
+// getItemLayout 返回类型
+export interface ItemLayout {
+  length: number;
+  offset: number;
+  index: number;
+}
+
+// 照片类型
+export interface Photo {
+  url: string;
+  isPrimary: boolean;
+}
+
+// 酒店搜索参数（API请求用）
+export interface HotelSearchParams {
+  location?: string;
+  keyword?: string;
+  startDate?: string;
+  endDate?: string;
+  rooms?: number;
+  guests?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  stars?: number[];
+}
+
+// 酒店详情参数（API请求用）
+export interface HotelDetailParams {
+  startDate?: string;
+  endDate?: string;
+  rooms?: number;
+  guests?: number;
+}

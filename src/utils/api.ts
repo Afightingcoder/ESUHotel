@@ -1,36 +1,51 @@
 // API封装文件
 
-// 基地址
-export const BASE_URL = 'https://easystay-admin-production.up.railway.app/api'; // 需要替换为本机ipv4地址, localhost移动端无法访问
+import type {
+  HotelType,
+  HotelSearchParams,
+  HotelDetailParams,
+  HotelListResponse,
+  HotelDetailResponse,
+} from '../types';
 
-// 酒店搜索参数类型
-export interface HotelSearchParams {
-  location?: string;        // 位置
-  keyword?: string;         // 酒店/品牌关键词
-  startDate?: string;       // 入住日期
-  endDate?: string;         // 离店日期
-  rooms?: number;           // 房间数
-  guests?: number;          // 总人数（成人+儿童）
-  minPrice?: number;        // 最低价格
-  maxPrice?: number;        // 最高价格
-  stars?: number[];         // 星级数组
+// 基地址
+export const BASE_URL = 'https://easystay-admin-production.up.railway.app/api';
+
+// API 错误类
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public statusText: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-// 酒店详情参数类型
-export interface HotelDetailParams {
-  startDate?: string;       // 入住日期
-  endDate?: string;         // 离店日期
-  rooms?: number;           // 房间数
-  guests?: number;          // 总人数（成人+儿童）
+// 类型守卫：检查是否为有效响应
+function isValidResponse<T>(response: unknown, requiredFields: string[]): response is T {
+  if (typeof response !== 'object' || response === null) {
+    return false;
+  }
+  const obj = response as Record<string, unknown>;
+  return requiredFields.every(field => field in obj);
+}
+
+// 类型守卫：检查是否为酒店详情响应
+export function isHotelDetailResponse(response: unknown): response is HotelDetailResponse {
+  return isValidResponse<HotelDetailResponse>(response, ['data']);
+}
+
+// 类型守卫：检查是否为酒店列表
+export function isHotelList(response: unknown): response is HotelListResponse {
+  return Array.isArray(response);
 }
 
 /**
  * 通用fetch请求函数
- * @param url 请求路径
- * @param options 请求选项
- * @returns Promise<any> 请求结果
  */
-async function fetchApi(url: string, options: RequestInit = {}): Promise<any> {
+async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
   try {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
@@ -41,11 +56,16 @@ async function fetchApi(url: string, options: RequestInit = {}): Promise<any> {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new ApiError(
+        `HTTP error! status: ${response.status}`,
+        response.status,
+        response.statusText
+      );
     }
-    const data = await response.json();
+    
+    const data: unknown = await response.json();
     console.log('API response:', data);
-    return data;
+    return data as T;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -54,11 +74,8 @@ async function fetchApi(url: string, options: RequestInit = {}): Promise<any> {
 
 /**
  * 获取酒店列表（支持搜索参数）
- * @param params 搜索参数
- * @returns Promise<any> 酒店列表数据
  */
-export const getHotelList = async (params?: HotelSearchParams): Promise<any> => {
-  // 构建查询字符串
+export const getHotelList = async (params?: HotelSearchParams): Promise<HotelListResponse> => {
   const queryParams = new URLSearchParams();
   
   if (params) {
@@ -78,16 +95,16 @@ export const getHotelList = async (params?: HotelSearchParams): Promise<any> => 
   const queryString = queryParams.toString();
   const url = queryString ? `/admin/hotels/published?${queryString}` : '/admin/hotels/published';
   
-  return fetchApi(url);
+  return fetchApi<HotelListResponse>(url);
 };
 
 /**
  * 获取单个酒店详情
- * @param hotelId 酒店ID
- * @param params 查询参数（入住日期、离店日期、房间数、人数）
- * @returns Promise<any> 酒店详情数据
  */
-export const getHotelDetail = async (hotelId: string, params?: HotelDetailParams): Promise<any> => {
+export const getHotelDetail = async (
+  hotelId: string,
+  params?: HotelDetailParams
+): Promise<HotelDetailResponse> => {
   const queryParams = new URLSearchParams();
   
   if (params) {
@@ -100,18 +117,21 @@ export const getHotelDetail = async (hotelId: string, params?: HotelDetailParams
   const queryString = queryParams.toString();
   const url = queryString ? `/hotels/public/${hotelId}?${queryString}` : `/hotels/public/${hotelId}`;
   
-  return fetchApi(url);
+  return fetchApi<HotelDetailResponse>(url);
 };
 
 /**
  * 发送数据到指定接口
- * @param url 请求路径
- * @param data 发送的数据
- * @returns Promise<any> 请求结果
  */
-export const postData = async (url: string, data: any): Promise<any> => {
-  return fetchApi(url, {
+export const postData = async <TRequest, TResponse>(
+  url: string,
+  data: TRequest
+): Promise<TResponse> => {
+  return fetchApi<TResponse>(url, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 };
+
+// 重新导出类型供其他模块使用
+export type { HotelSearchParams, HotelDetailParams };

@@ -7,7 +7,7 @@ const ANIMATION_DURATION = 280;
 interface PageTransitionProps {
   children: React.ReactNode;
   direction: 'forward' | 'back';
-  trigger: any;
+  trigger: number;
 }
 
 const PageTransition: React.FC<PageTransitionProps> = ({

@@ -1,6 +1,15 @@
 import React, {useState, useMemo, useCallback, useRef} from 'react';
 import {View, Text, FlatList} from 'react-native';
-import type {RouteType, HotelType} from '../../types';
+import type {
+  RouteType,
+  HotelType,
+  ListRouteParams,
+  DetailRouteParams,
+  SearchRouteParams,
+  FlatListScrollEvent,
+  ItemLayout,
+  AdvancedFilters,
+} from '../../types';
 import SortFilter from '../../components/SortFilter';
 import PriceStarFilter from '../../components/PriceStarFilter';
 import AdvancedFilter from '../../components/AdvancedFilter';
@@ -18,12 +27,14 @@ import {sortHotels, buildSearchParams} from './utils';
 
 const ITEM_HEIGHT = 140;
 
+type NavigateFunction = (route: RouteType, params?: SearchRouteParams | DetailRouteParams) => void;
+
 const HotelListPage = ({
   navigateTo,
   routeParams
 }: {
-  navigateTo: (route: RouteType, params?: any) => void;
-  routeParams: any;
+  navigateTo: NavigateFunction;
+  routeParams: ListRouteParams;
 }) => {
   const [location, setLocation] = useState<string>(routeParams?.location || '');
   const [startDate, setStartDate] = useState<string>(routeParams?.startDate || '');
@@ -66,12 +77,7 @@ const HotelListPage = ({
   const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
   const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
   
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    hotFilters: string[];
-    accommodationTypes: string[];
-    hotelFeatures: string[];
-    roomFeatures: string[];
-  }>(() => {
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(() => {
     const keyword = routeParams?.keyword || '';
     return parseKeywordFilters(keyword);
   });
@@ -194,13 +200,13 @@ const HotelListPage = ({
 
   const keyExtractor = useCallback((item: HotelType) => `${item.id}`, []);
 
-  const getItemLayout = useCallback((data: any, index: number) => ({
+  const getItemLayout = useCallback((_data: unknown, index: number): ItemLayout => ({
     length: ITEM_HEIGHT,
     offset: ITEM_HEIGHT * index,
     index,
   }), []);
 
-  const handleScroll = useCallback((event: any) => {
+  const handleScroll = useCallback((event: FlatListScrollEvent) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     setShowScrollTop(offsetY > 200);
   }, []);

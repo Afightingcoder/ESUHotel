@@ -1,4 +1,4 @@
-import type {HotelType} from '../../types';
+import type {HotelType, HotelSearchParams, AdvancedFilters, RoomType} from '../../types';
 
 export const ITEM_HEIGHT = 140;
 
@@ -12,9 +12,25 @@ export const PRICE_RANGES: Record<number, {min?: number; max?: number}> = {
   1401: {min: 1400},
 };
 
+// 类型守卫：检查 roomTypes 是否为可用/不可用格式
+function isRoomTypesObject(
+  roomTypes: RoomType[] | {available: RoomType[]; unavailable: RoomType[]}
+): roomTypes is {available: RoomType[]; unavailable: RoomType[]} {
+  return typeof roomTypes === 'object' && roomTypes !== null && 'available' in roomTypes;
+}
+
 export const getHotelPrice = (hotel: HotelType): number => {
-  const roomTypes = hotel.roomTypes as any;
-  return roomTypes?.available?.[0]?.price || roomTypes?.[0]?.price || 0;
+  const roomTypes = hotel.roomTypes;
+  
+  if (isRoomTypesObject(roomTypes)) {
+    return roomTypes.available?.[0]?.price || 0;
+  }
+  
+  if (Array.isArray(roomTypes)) {
+    return roomTypes?.[0]?.price || 0;
+  }
+  
+  return 0;
 };
 
 export const sortHotels = (hotels: HotelType[], sortType: string): HotelType[] => {
@@ -47,15 +63,10 @@ export const buildSearchParams = (
   children: number,
   selectedPrice: number | null,
   selectedStars: number[],
-  advancedFilters: {
-    hotFilters: string[];
-    accommodationTypes: string[];
-    hotelFeatures: string[];
-    roomFeatures: string[];
-  },
+  advancedFilters: AdvancedFilters,
   formatDateFn: (date: string) => string,
-): any => {
-  const searchParams: any = {
+): HotelSearchParams => {
+  const searchParams: HotelSearchParams = {
     location,
     keyword: searchKeyword,
     startDate: formatDateFn(startDate),
@@ -113,12 +124,7 @@ export const getSortLabel = (sortType: string): string => {
   }
 };
 
-export const getAdvancedFilterCount = (filters: {
-  hotFilters: string[];
-  accommodationTypes: string[];
-  hotelFeatures: string[];
-  roomFeatures: string[];
-}): number => {
+export const getAdvancedFilterCount = (filters: AdvancedFilters): number => {
   return (
     filters.hotFilters.length +
     filters.accommodationTypes.length +
