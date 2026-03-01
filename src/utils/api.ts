@@ -9,7 +9,7 @@ import type {
 } from '../types';
 
 // 基地址
-export const BASE_URL = 'https://easystay-admin-production.up.railway.app/api';
+export const BASE_URL = 'https://easystay-admin-production.up.railway.app/api'; // http://192.168.10.109:3000/api
 
 // API 错误类
 export class ApiError extends Error {
@@ -90,6 +90,8 @@ export const getHotelList = async (params?: HotelSearchParams): Promise<HotelLis
     if (params.stars && params.stars.length > 0) {
       queryParams.append('stars', params.stars.join(','));
     }
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
   }
   
   const queryString = queryParams.toString();
