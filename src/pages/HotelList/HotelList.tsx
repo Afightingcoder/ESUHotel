@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback, useRef} from 'react';
-import {View, Text, FlatList} from 'react-native';
+import {View, Text, FlatList, ActivityIndicator} from 'react-native';
 import type {
   RouteType,
   HotelType,
@@ -26,6 +26,7 @@ import SearchModal from './SearchModal';
 import {sortHotels, buildSearchParams} from './utils';
 
 const ITEM_HEIGHT = 140;
+const PAGE_SIZE = 15;
 
 type NavigateFunction = (route: RouteType, params?: SearchRouteParams | DetailRouteParams) => void;
 
@@ -46,6 +47,25 @@ const HotelListPage = ({
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const searchParamsRef = useRef<{
+    price: number | null;
+    stars: number[];
+    filters: AdvancedFilters;
+  }>({
+    price: null,
+    stars: [],
+    filters: {
+      hotFilters: [],
+      accommodationTypes: [],
+      hotelFeatures: [],
+      roomFeatures: [],
+    },
+  });
 
   React.useEffect(() => {
     console.log('接收到的routeParams:', routeParams);
@@ -102,19 +122,23 @@ const HotelListPage = ({
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
 
-  const handleLoadMore = useCallback(() => {
-  }, []);
-
-  const sortedHotels = useMemo(() => {
-    return sortHotels(hotels, sortType);
-  }, [hotels, sortType]);
-
+  // 搜索酒店（首次加载或重新搜索）
   const searchHotels = useCallback(async (params?: {
     price?: number | null;
     stars?: number[];
-    filters?: typeof advancedFilters;
+    filters?: AdvancedFilters;
   }) => {
     setIsLoading(true);
+    setCurrentPage(1);
+    setHasMore(true);
+    
+    const currentParams = {
+      price: params?.price !== undefined ? params.price : selectedPrice,
+      stars: params?.stars || selectedStars,
+      filters: params?.filters || advancedFilters,
+    };
+    searchParamsRef.current = currentParams;
+
     try {
       const searchParams = buildSearchParams(
         location,
@@ -124,19 +148,24 @@ const HotelListPage = ({
         rooms,
         adults,
         children,
-        params?.price !== undefined ? params.price : selectedPrice,
-        params?.stars || selectedStars,
-        params?.filters || advancedFilters,
+        currentParams.price,
+        currentParams.stars,
+        currentParams.filters,
         formatDate
       );
 
       console.log('搜索参数:', searchParams);
       
-      const hotelList = await getHotelList(searchParams);
-      console.log('获取酒店列表成功:', hotelList);
+      const response = await getHotelList({
+        ...searchParams,
+        page: 1,
+        limit: PAGE_SIZE,
+      });
+      console.log('获取酒店列表成功:', response);
       
-      if (hotelList) {
-        setHotels(hotelList);
+      if (response && response.data) {
+        setHotels(response.data);
+        setHasMore(response.pagination?.hasMore ?? false);
       }
     } catch (error) {
       console.error('获取酒店列表失败:', error);
@@ -144,6 +173,54 @@ const HotelListPage = ({
       setIsLoading(false);
     }
   }, [location, searchKeyword, startDate, endDate, rooms, adults, children, selectedPrice, selectedStars, advancedFilters]);
+
+  // 加载更多
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore || isLoading) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    try {
+      const searchParams = buildSearchParams(
+        location,
+        searchKeyword,
+        startDate,
+        endDate,
+        rooms,
+        adults,
+        children,
+        searchParamsRef.current.price,
+        searchParamsRef.current.stars,
+        searchParamsRef.current.filters,
+        formatDate
+      );
+
+      console.log('加载更多，页码:', nextPage);
+      
+      const response = await getHotelList({
+        ...searchParams,
+        page: nextPage,
+        limit: PAGE_SIZE,
+      });
+      
+      if (response && response.data) {
+        setHotels(prev => [...prev, ...response.data]);
+        setCurrentPage(nextPage);
+        setHasMore(response.pagination?.hasMore ?? false);
+      }
+    } catch (error) {
+      console.error('加载更多失败:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, isLoading, currentPage, location, searchKeyword, startDate, endDate, rooms, adults, children]);
+
+  const sortedHotels = useMemo(() => {
+    return sortHotels(hotels, sortType);
+  }, [hotels, sortType]);
 
   const handleHotelPress = useCallback(async (item: HotelType) => {
     try {
@@ -243,12 +320,26 @@ const HotelListPage = ({
 
   const renderListFooter = useCallback(() => {
     if (sortedHotels.length === 0) return null;
-    return (
-      <View style={styles.loadMoreFooter}>
-        <Text style={styles.loadMoreText}>———我是有底线的哦———</Text>
-      </View>
-    );
-  }, [sortedHotels.length]);
+    
+    if (isLoadingMore) {
+      return (
+        <View style={styles.loadingMoreFooter}>
+          <ActivityIndicator size="small" color="#1890ff" />
+          <Text style={styles.loadingMoreText}>加载中...</Text>
+        </View>
+      );
+    }
+    
+    if (!hasMore) {
+      return (
+        <View style={styles.loadMoreFooter}>
+          <Text style={styles.loadMoreText}>———我是有底线的哦———</Text>
+        </View>
+      );
+    }
+    
+    return null;
+  }, [sortedHotels.length, isLoadingMore, hasMore]);
 
   const handleSortChange = useCallback((type: string) => {
     setSortType(type);
@@ -260,7 +351,7 @@ const HotelListPage = ({
     searchHotels({ price, stars });
   }, [searchHotels]);
 
-  const handleAdvancedFilterChange = useCallback((filters: typeof advancedFilters) => {
+  const handleAdvancedFilterChange = useCallback((filters: AdvancedFilters) => {
     setAdvancedFilters(filters);
     searchHotels({ filters });
   }, [searchHotels]);
@@ -308,12 +399,12 @@ const HotelListPage = ({
           renderItem={renderHotelItem}
           keyExtractor={keyExtractor}
           getItemLayout={getItemLayout}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
+          initialNumToRender={15}
+          maxToRenderPerBatch={15}
           windowSize={5}
           removeClippedSubviews={true}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.1}
           ListEmptyComponent={renderListEmpty}
           ListFooterComponent={renderListFooter}
           contentContainerStyle={styles.listContent}

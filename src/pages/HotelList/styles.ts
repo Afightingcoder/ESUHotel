@@ -255,6 +255,16 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  loadingMoreFooter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: '#1890ff',
+  },
   // 空状态样式
   emptyContainer: {
     flex: 1,

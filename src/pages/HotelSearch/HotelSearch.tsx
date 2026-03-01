@@ -144,9 +144,9 @@ const HotelSearchPage = ({
     const fetchBannerHotel = async () => {
       try {
         setBannerLoading(true);
-        const response = await getHotelList();
-        if (response && response.length > 0) {
-          const firstHotel = response[0];
+        const response = await getHotelList({ page: 1, limit: 1 });
+        if (response.data && response.data.length > 0) {
+          const firstHotel = response.data[0];
           if (firstHotel.id) {
             const detailResponse = await getHotelDetail(firstHotel.id);
             if (detailResponse && detailResponse.data) {
@@ -229,8 +229,12 @@ const HotelSearchPage = ({
       
       console.log('搜索参数:', searchParams);
       
-      const hotelList = await getHotelList(searchParams);
-      console.log('获取酒店列表成功:', hotelList);
+      const response = await getHotelList({
+        ...searchParams,
+        page: 1,
+        limit: 15,
+      });
+      console.log('获取酒店列表成功:', response);
       
       navigateTo('list', {
         location,
@@ -240,7 +244,7 @@ const HotelSearchPage = ({
         rooms,
         adults,
         children,
-        hotels: hotelList,
+        hotels: response?.data || [],
         selectedPrice,
         selectedStars,
       });

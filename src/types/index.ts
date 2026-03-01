@@ -115,9 +115,6 @@ export interface ApiResponse<T> {
   status?: number;
 }
 
-// 酒店列表响应
-export type HotelListResponse = HotelType[];
-
 // 酒店详情响应
 export interface HotelDetailResponse {
   data: HotelType;
@@ -166,6 +163,8 @@ export interface HotelSearchParams {
   minPrice?: number;
   maxPrice?: number;
   stars?: number[];
+  page?: number;
+  limit?: number;
 }
 
 // 酒店详情参数（API请求用）
@@ -174,4 +173,20 @@ export interface HotelDetailParams {
   endDate?: string;
   rooms?: number;
   guests?: number;
+}
+
+// 分页信息
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+// 酒店列表响应（带分页）
+export interface HotelListResponse {
+  success: boolean;
+  data: HotelType[];
+  pagination: Pagination;
 }
