@@ -80,6 +80,9 @@ const HotelListPage = ({
       if (updatedAdults) setAdults(updatedAdults);
       if (updatedChildren) setChildren(updatedChildren);
       if (updatedHotels) setHotels(updatedHotels);
+      if (updatedStartDate || updatedEndDate || updatedRooms || updatedAdults || updatedChildren) {
+         searchHotels();
+      }
     }
   }, [routeParams]); 
 

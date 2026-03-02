@@ -143,3 +143,48 @@ export const filterOptions = {
   hotelFeatures: mapToOptions(hotelFeaturesMap),
   roomFeatures: mapToOptions(roomFeaturesMap),
 };
+
+// 价格区间配置
+export interface PriceRangeOption {
+  id: number;
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+}
+
+export const PRICE_RANGES: PriceRangeOption[] = [
+  { id: 1, label: '￥200以下', value: 200, max: 200 },
+  { id: 2, label: '￥200-￥350', value: 350, min: 200, max: 350 },
+  { id: 3, label: '￥350-￥400', value: 400, min: 350, max: 400 },
+  { id: 4, label: '￥400-￥500', value: 500, min: 400, max: 500 },
+  { id: 5, label: '￥500-￥900', value: 900, min: 500, max: 900 },
+  { id: 6, label: '￥900-￥1400', value: 1400, min: 900, max: 1400 },
+  { id: 7, label: '￥1400以上', value: 1401, min: 1400 },
+];
+
+export const getPriceRangeParams = (value: number): { min?: number; max?: number } | null => {
+  const range = PRICE_RANGES.find(r => r.value === value);
+  if (!range) return null;
+  return { min: range.min, max: range.max };
+};
+
+export const getPriceRangeLabel = (value: number): string | undefined => {
+  const range = PRICE_RANGES.find(r => r.value === value);
+  return range?.label;
+};
+
+// 快捷标签配置
+export interface QuickTag {
+  id: string;
+  name: string;
+}
+
+export const QUICK_TAGS: QuickTag[] = [
+  { id: 'tag_01', name: '亲子友好' },
+  { id: 'tag_02', name: '豪华酒店' },
+  { id: 'tag_03', name: '免费停车' },
+  { id: 'tag_04', name: '近地铁' },
+  { id: 'tag_05', name: '含早餐' },
+  { id: 'tag_06', name: '机场接送' },
+];

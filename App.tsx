@@ -46,8 +46,15 @@ const App = () => {
       navigateTo('search', params as SearchRouteParams);
     } else if (targetRoute === 'list') {
       const listParams: ListRouteParams = {
-        ...params,
         ...detailParams,
+        ...params,
+        updatedData: {
+          startDate: params?.startDate,
+          endDate: params?.endDate,
+          rooms: params?.rooms,
+          adults: params?.adults,
+          children: params?.children,
+        },
       };
       navigateTo('list', listParams);
     } else {

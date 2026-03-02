@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import type {
   SearchRouteParams,
   ListRouteParams,
   DetailRouteParams,
-  HotelSearchParams,
 } from '../../types';
 import LoadingModal from '../../components/LoadingModal';
 import LocationSelector from '../../components/LocationSelector';
@@ -25,17 +24,17 @@ import DateSelector from '../../components/DateSelector';
 import GuestModal from '../../components/GuestModal';
 import PriceStarFilter from '../../components/PriceStarFilter';
 import {formatDate} from '../../utils/dateUtils';
-import {getHotelList, getHotelDetail} from '../../utils/api';
-import {amenitiesMap, hotFiltersMap} from '../../utils/mappings';
+import {getHotelList} from '../../utils/api';
+import {amenitiesMap, QUICK_TAGS, getPriceRangeLabel} from '../../utils/mappings';
 import {styles} from './styles';
 import {init} from 'react-native-amap-geolocation';
+import {useBannerHotel} from '../../hooks/useBannerHotel';
+import {useSearchForm} from '../../hooks/useSearchForm';
 
-// 骨架屏组件 - 用于在加载banner数据时显示占位动画
 const SkeletonBanner = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 创建循环动画效果，实现闪烁的加载状态
     Animated.loop(
       Animated.sequence([
         Animated.timing(animatedValue, {
@@ -52,7 +51,6 @@ const SkeletonBanner = () => {
     ).start();
   }, []);
 
-  // 插值透明度值，从0.3到0.8循环变化
   const opacity = animatedValue.interpolate({
     inputRange: [0, 1],
     outputRange: [0.3, 0.8],
@@ -79,56 +77,24 @@ const HotelSearchPage = ({
   navigateTo: NavigateFunction;
   routeParams: SearchRouteParams;
 }) => {
-  const [location, setLocation] = useState<string>(routeParams?.location || '上海');
-  const [keyword, setKeyword] = useState<string>(routeParams?.keyword || '');
+  const {bannerHotel, bannerLoading} = useBannerHotel();
   
-  const [bannerHotel, setBannerHotel] = useState<HotelType | null>(null);
-  const [bannerLoading, setBannerLoading] = useState<boolean>(true);
+  const {
+    formState,
+    setLocation,
+    setKeyword,
+    setRooms,
+    setAdults,
+    setChildren,
+    setSelectedPrice,
+    setSelectedStars,
+    handleDateSelect,
+    buildSearchParams,
+  } = useSearchForm(routeParams);
 
-  const getTodayDate = () => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
-      2,
-      '0',
-    )}-${String(today.getDate()).padStart(2, '0')}`;
-  };
-
-  const getTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return `${tomorrow.getFullYear()}-${String(
-      tomorrow.getMonth() + 1,
-    ).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-  };
-
-  const [startDate, setStartDate] = useState<string>(routeParams?.startDate || getTodayDate());
-  const [endDate, setEndDate] = useState<string>(routeParams?.endDate || getTomorrowDate());
-  const [filters, setFilters] = useState<{
-    star: number[];
-    priceRange: number[];
-  }>({
-    star: [],
-    priceRange: [],
-  });
   const [loading] = useState<boolean>(false);
-  const [rooms, setRooms] = useState<number>(routeParams?.rooms || 1);
-  const [adults, setAdults] = useState<number>(routeParams?.adults || 1);
-  const [children, setChildren] = useState<number>(routeParams?.children || 0);
-  const [isGuestModalVisible, setIsGuestModalVisible] =
-    useState<boolean>(false);
-  const [isFilterModalVisible, setIsFilterModalVisible] =
-    useState<boolean>(false);
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(routeParams?.selectedPrice || null);
-  const [selectedStars, setSelectedStars] = useState<number[]>(routeParams?.selectedStars || []);
-
-  const quickTags = [
-    {id: 'tag_01', name: '亲子友好'},
-    {id: 'tag_02', name: '豪华酒店'},
-    {id: 'tag_03', name: '免费停车'},
-    {id: 'tag_04', name: '近地铁'},
-    {id: 'tag_05', name: '含早餐'},
-    {id: 'tag_06',name:'机场接送'}
-  ];
+  const [isGuestModalVisible, setIsGuestModalVisible] = useState<boolean>(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -140,93 +106,9 @@ const HotelSearchPage = ({
     return () => {};
   }, []);
 
-  useEffect(() => {
-    const fetchBannerHotel = async () => {
-      try {
-        setBannerLoading(true);
-        const response = await getHotelList({ page: 1, limit: 1 });
-        if (response.data && response.data.length > 0) {
-          const firstHotel = response.data[0];
-          if (firstHotel.id) {
-            const detailResponse = await getHotelDetail(firstHotel.id);
-            if (detailResponse && detailResponse.data) {
-              setBannerHotel(detailResponse.data);
-            } else {
-              setBannerHotel(firstHotel);
-            }
-          } else {
-            setBannerHotel(firstHotel);
-          }
-        }
-      } catch (error) {
-        console.error('获取banner酒店数据失败:', error);
-      } finally {
-        setBannerLoading(false);
-      }
-    };
-    
-    fetchBannerHotel();
-  }, []);
-
-  useEffect(() => {
-    if (routeParams) {
-      if (routeParams.location) setLocation(routeParams.location);
-      if (routeParams.keyword) setKeyword(routeParams.keyword);
-      if (routeParams.startDate) setStartDate(routeParams.startDate);
-      if (routeParams.endDate) setEndDate(routeParams.endDate);
-      if (routeParams.rooms) setRooms(routeParams.rooms);
-      if (routeParams.adults) setAdults(routeParams.adults);
-      if (routeParams.children) setChildren(routeParams.children);
-      if (routeParams.selectedPrice !== undefined) setSelectedPrice(routeParams.selectedPrice);
-      if (routeParams.selectedStars) setSelectedStars(routeParams.selectedStars);
-    }
-  }, [routeParams]);
-
-  const handleDateSelect = (start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
-  };
-
   const handleSearch = async () => {
-    let mappedKeyword = keyword;
-    Object.entries(hotFiltersMap).forEach(([chinese, english]) => {
-      if (keyword === chinese) {
-        mappedKeyword = english;
-      }
-    });
-    
     try {
-      const searchParams: HotelSearchParams = {
-        location,
-        keyword: mappedKeyword,
-        startDate: formatDate(startDate),
-        endDate: formatDate(endDate),
-        rooms,
-        guests: adults + children,
-      };
-      
-      if (selectedPrice !== null) {
-        const priceRanges: Record<number, {min?: number; max?: number}> = {
-          200: {max: 200},
-          350: {min: 200, max: 350},
-          400: {min: 350, max: 400},
-          500: {min: 400, max: 500},
-          900: {min: 500, max: 900},
-          1400: {min: 900, max: 1400},
-          1401: {min: 1400},
-        };
-        
-        const priceRange = priceRanges[selectedPrice];
-        if (priceRange) {
-          if (priceRange.min) searchParams.minPrice = priceRange.min;
-          if (priceRange.max) searchParams.maxPrice = priceRange.max;
-        }
-      }
-      
-      if (selectedStars.length > 0) {
-        searchParams.stars = selectedStars;
-      }
-      
+      const searchParams = buildSearchParams();
       console.log('搜索参数:', searchParams);
       
       const response = await getHotelList({
@@ -237,21 +119,55 @@ const HotelSearchPage = ({
       console.log('获取酒店列表成功:', response);
       
       navigateTo('list', {
-        location,
-        keyword,
+        location: formState.location,
+        keyword: formState.keyword,
         startDate: searchParams.startDate,
         endDate: searchParams.endDate,
-        rooms,
-        adults,
-        children,
+        rooms: formState.rooms,
+        adults: formState.adults,
+        children: formState.children,
         hotels: response?.data || [],
-        selectedPrice,
-        selectedStars,
+        selectedPrice: formState.selectedPrice,
+        selectedStars: formState.selectedStars,
       });
     } catch (error) {
       console.error('获取酒店列表失败:', error);
       Alert.alert('查询失败', '获取酒店列表时出现错误，请稍后重试');
     }
+  };
+
+  const handleBannerPress = () => {
+    if (!bannerHotel) return;
+    navigateTo('detail', {
+      hotelId: bannerHotel.id,
+      hotelDetail: bannerHotel,
+      startDate: formatDate(formState.startDate),
+      endDate: formatDate(formState.endDate),
+      rooms: formState.rooms,
+      adults: formState.adults,
+      children: formState.children,
+      location: formState.location,
+      keyword: formState.keyword,
+      selectedPrice: formState.selectedPrice,
+      selectedStars: formState.selectedStars,
+      fromRoute: 'search',
+    });
+  };
+
+  const renderFilterText = () => {
+    if (!formState.selectedPrice && formState.selectedStars.length === 0) {
+      return '价格/星级';
+    }
+    
+    const parts: string[] = [];
+    if (formState.selectedPrice) {
+      const label = getPriceRangeLabel(formState.selectedPrice);
+      if (label) parts.push(label);
+    }
+    if (formState.selectedStars.length > 0) {
+      parts.push(formState.selectedStars.map(star => `${star}星`).join(', '));
+    }
+    return parts.join(' · ');
   };
 
   return (
@@ -261,20 +177,7 @@ const HotelSearchPage = ({
       ) : bannerHotel ? (
         <TouchableOpacity
           style={styles.bannerContainer}
-          onPress={() => navigateTo('detail', {
-            hotelId: bannerHotel.id,
-            hotelDetail: bannerHotel,
-            startDate: formatDate(startDate),
-            endDate: formatDate(endDate),
-            rooms,
-            adults,
-            children,
-            location,
-            keyword,
-            selectedPrice,
-            selectedStars,
-            fromRoute: 'search',
-          })}>
+          onPress={handleBannerPress}>
           <ImageBackground
             source={{uri: bannerHotel.photos?.[0]?.url || 'https://img.cdn1.vip/i/699dc7d46e039_1771947988.webp'}}
             style={styles.bannerImage}>
@@ -296,10 +199,10 @@ const HotelSearchPage = ({
         <View style={styles.locationSearchItem}>
           <View style={styles.locationContainer}>
             <View style={styles.floatingLabelInputContainer}>
-              {location ? <Text style={styles.floatingLabel}>位置</Text> : null}
+              {formState.location ? <Text style={styles.floatingLabel}>位置</Text> : null}
               <View style={styles.searchInputWrapper}>
                 <LocationSelector
-                  value={location}
+                  value={formState.location}
                   onChange={setLocation}
                   placeholder="位置"
                 />
@@ -312,22 +215,22 @@ const HotelSearchPage = ({
         <View style={styles.searchItem}>
           <Text style={[styles.searchLabel,{marginRight: 0}]}>🔍</Text>
           <View style={styles.floatingLabelInputContainer}>
-            {keyword ? (
+            {formState.keyword ? (
               <Text style={[styles.floatingLabel, {left: 6}]}>酒店/品牌</Text>
             ) : null}
             <TextInput
               style={[
                 styles.searchInput,
-                keyword ? styles.searchInputWithText : null,
+                formState.keyword ? styles.searchInputWithText : null,
               ]}
-              value={keyword}
+              value={formState.keyword}
               onChangeText={setKeyword}
-              placeholder={!keyword ? '酒店/品牌' : ''}
+              placeholder={!formState.keyword ? '酒店/品牌' : ''}
               autoCapitalize="none"
               keyboardType="default"
               autoCorrect={false}
             />
-            {keyword ? (
+            {formState.keyword ? (
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={() => setKeyword('')}>
@@ -340,8 +243,8 @@ const HotelSearchPage = ({
 
         <View style={styles.searchItem}>
           <DateSelector
-            startDate={startDate}
-            endDate={endDate}
+            startDate={formState.startDate}
+            endDate={formState.endDate}
             onDateSelect={handleDateSelect}
           />
         </View>
@@ -353,7 +256,7 @@ const HotelSearchPage = ({
           <Text style={styles.searchLabel}>👥</Text>
           <View style={styles.guestInfoContainer}>
             <Text style={styles.guestInfoText}>
-              {rooms}间房 · {adults}成人 · {children}儿童
+              {formState.rooms}间房 · {formState.adults}成人 · {formState.children}儿童
             </Text>
             <Text style={styles.dropdownIcon}>▼</Text>
           </View>
@@ -368,29 +271,9 @@ const HotelSearchPage = ({
             <Text
               style={[
                 styles.guestInfoText,
-                !selectedPrice && selectedStars.length === 0 && styles.greyText,
+                !formState.selectedPrice && formState.selectedStars.length === 0 && styles.greyText,
               ]}>
-              {selectedPrice || selectedStars.length > 0 ? (
-                <>
-                  {selectedPrice
-                    ? [
-                        {id: 1, label: '￥200以下', value: 200},
-                        {id: 2, label: '￥200-￥350', value: 350},
-                        {id: 3, label: '￥350-￥400', value: 400},
-                        {id: 4, label: '￥400-￥500', value: 500},
-                        {id: 5, label: '￥500-￥900', value: 900},
-                        {id: 6, label: '￥900-￥1400', value: 1400},
-                        {id: 7, label: '￥1400以上', value: 1401},
-                      ].find(item => item.value === selectedPrice)?.label
-                    : ''}
-                  {selectedPrice && selectedStars.length > 0 ? ' · ' : ''}
-                  {selectedStars.length > 0
-                    ? selectedStars.map(star => `${star}星`).join(', ')
-                    : ''}
-                </>
-              ) : (
-                '价格/星级'
-              )}
+              {renderFilterText()}
             </Text>
             <Text style={styles.dropdownIcon}>▼</Text>
           </View>
@@ -399,18 +282,18 @@ const HotelSearchPage = ({
 
         <View style={styles.tagsContainer}>
           <View style={styles.tagsContent}>
-            {quickTags.map(tag => (
+            {QUICK_TAGS.map(tag => (
               <TouchableOpacity
                 key={tag.id}
                 style={[
                   styles.quickTag,
-                  keyword === tag.name && styles.quickTagActive,
+                  formState.keyword === tag.name && styles.quickTagActive,
                 ]}
                 onPress={() => setKeyword(tag.name)}>
                 <Text
                   style={[
                     styles.quickTagText,
-                    keyword === tag.name && styles.quickTagTextActive,
+                    formState.keyword === tag.name && styles.quickTagTextActive,
                   ]}>
                   {tag.name}
                 </Text>
@@ -430,9 +313,9 @@ const HotelSearchPage = ({
         visible={isGuestModalVisible}
         onClose={() => setIsGuestModalVisible(false)}
         onConfirm={() => {}}
-        rooms={rooms}
-        adults={adults}
-        children={children}
+        rooms={formState.rooms}
+        adults={formState.adults}
+        children={formState.children}
         onRoomsChange={setRooms}
         onAdultsChange={setAdults}
         onChildrenChange={setChildren}
@@ -463,13 +346,9 @@ const HotelSearchPage = ({
                 onFilterChange={(price, stars) => {
                   setSelectedPrice(price);
                   setSelectedStars(stars);
-                  setFilters({
-                    star: stars,
-                    priceRange: price ? [price] : [],
-                  });
                 }}
-                currentPrice={selectedPrice}
-                currentStars={selectedStars}
+                currentPrice={formState.selectedPrice}
+                currentStars={formState.selectedStars}
                 onRealTimeChange={(price, stars) => {
                   setSelectedPrice(price);
                   setSelectedStars(stars);

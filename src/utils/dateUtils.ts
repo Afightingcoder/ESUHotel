@@ -1,6 +1,23 @@
 // 日期处理工具函数
 
 /**
+ * 获取今天的日期字符串 (YYYY-MM-DD)
+ */
+export const getTodayDate = (): string => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * 获取明天的日期字符串 (YYYY-MM-DD)
+ */
+export const getTomorrowDate = (): string => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+};
+
+/**
  * 创建日期选择处理函数
  * @param setStartDate 设置开始日期的函数
  * @param setEndDate 设置结束日期的函数
